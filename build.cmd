@@ -67,6 +67,7 @@ xcopy "%ROOT%config.example.ini" "%OUT%\" /Y /Q >nul
 if not exist "%OUT%\data" mkdir "%OUT%\data"
 if not exist "%OUT%\data\profiles" mkdir "%OUT%\data\profiles"
 if exist "%ROOT%data\profiles" xcopy "%ROOT%data\profiles" "%OUT%\data\profiles\" /E /I /Y /Q >nul
+if exist "%ROOT%data\defaults" xcopy "%ROOT%data\defaults" "%OUT%\data\defaults\" /E /I /Y /Q >nul
 if not exist "%OUT%\logs" mkdir "%OUT%\logs"
 
 if not exist "%OUT%\data\certs" mkdir "%OUT%\data\certs"

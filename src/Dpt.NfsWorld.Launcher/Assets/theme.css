@@ -265,3 +265,16 @@ body.light .footer { border-top-color: #dde5ee; color: #7c8b9b; }
 ::-webkit-scrollbar { width: 9px; height: 9px; }
 ::-webkit-scrollbar-thumb { background: #33414f; border-radius: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
+/* --------------------------------------------------- launcher 0.2 additions */
+
+.srv-row { display: flex; gap: 6px; align-items: stretch; }
+.srv-row select { flex: 1 1 auto; min-width: 0; }
+.srv-row .btn { margin: 0; padding: 0 10px; flex: none; }
+
+.hint b { color: #c8d8e8; font-weight: 600; }
+body.light .hint b { color: #2c3e50; }
+
+button[disabled] { opacity: .6; cursor: default; }
+.btn:disabled:hover { filter: none; }
+
+.svc.bad { background: #3a1f1f; color: #e08c8c; border-color: #5a2c2c; }

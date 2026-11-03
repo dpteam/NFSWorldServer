@@ -129,6 +129,26 @@ Check 'GetServerInformation names a profile' ($info -match '"serverProfile"')
 Check 'unknown endpoint is lenient (200)' ((HttpStatus "$engine/Unknown/ProbeEndpoint") -eq 200)
 
 Write-Host ''
+Write-Host '=== engine: client API surface (gameplay.dll strings) ===' -ForegroundColor Cyan
+$ticket = HttpText "$engine/crypto/cryptoticket" 'GET'
+Check 'crypto/cryptoticket returns a ticket' ($ticket -match '<CryptoTicket>' -and $ticket -match '<Ticket>')
+
+$natUrl = "$engine/User/SecureLogin?localIp=192.168.1.5&localPort=51234&publicIp=203.0.113.9&publicPort=51234&natType=2&natBehavior=1&natIncrement=0"
+Check 'SecureLogin accepts NAT info' ((HttpStatus $natUrl 'POST' '' @{ securityToken = $sessionToken }) -eq 200)
+
+$relayInfo = HttpText "$engine/crypto/relaycryptoticket/$personaId" 'GET' '' @{ securityToken = $sessionToken }
+Check 'relaycryptoticket returns UdpRelayInfo' ($relayInfo -match '<ArrayOfUdpRelayInfo>' -and $relayInfo -match '<UdpRelayHost>')
+Check 'relaycryptoticket carries a crypto ticket' ($relayInfo -match '<UdpRelayCryptoTicket>.+</UdpRelayCryptoTicket>')
+Check 'relaycryptoticket carries a port' ($relayInfo -match '<UdpRelayPort>\d+</UdpRelayPort>')
+
+Check 'optional endpoint catalog/catalogVersion' ((HttpStatus "$engine/catalog/catalogVersion") -eq 200)
+Check 'defaults file getregioninfo' ((HttpText "$engine/getregioninfo").Length -gt 20)
+Check 'defaults file carclasses' ((HttpText "$engine/carclasses").Length -gt 20)
+Check 'servertime returns a long' ((HttpText "$engine/servertime") -match '<long>\d+</long>')
+Check 'adsrv endpoint is harmless' ((HttpStatus "$engine/adsrv/locateService") -eq 200)
+Check 'personas/defaultcars answers' ((HttpStatus "$engine/personas/defaultcars" 'GET' '' @{ securityToken = $sessionToken }) -eq 200)
+
+Write-Host ''
 Write-Host '=== web: public board ===' -ForegroundColor Cyan
 $status = HttpText "$Web/api/status" 'GET'
 Check 'public /api/status' ($status -match '"ok":true')
@@ -153,6 +173,9 @@ if (-not $Token) {
     Check 'admin accounts include the probe account' ($accounts -match [regex]::Escape($user))
     $logs = HttpText "$Admin/api/admin/logs?limit=20" 'GET' '' @{ 'X-Admin-Token' = $Token }
     Check 'admin logs are readable' ($logs -match '"lines"')
+    $adminPlayers = HttpText "$Admin/api/admin/players" 'GET' '' @{ 'X-Admin-Token' = $Token }
+    Check 'admin players expose NAT info' ($adminPlayers -match '"natType"')
+    Check 'admin players expose the relay ticket' ($adminPlayers -match '"relayTicket"')
     $kick = HttpText "$Admin/api/admin/kick" 'POST' ("{""personaId"":$personaId,""reason"":""probe""}") @{ 'X-Admin-Token' = $Token }
     Check 'admin kick works' ($kick -match '"ok":true')
     Check 'kicked session leaves the online list' (-not ((HttpText "$Web/api/players") -match [regex]::Escape($personaName)))

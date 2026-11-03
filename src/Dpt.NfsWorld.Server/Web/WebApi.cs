@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
@@ -229,6 +229,13 @@ namespace Dpt.NfsWorld.Web
                     j.Prop("requests", s.Requests);
                     j.Prop("token", SessionManager.Short(s.Token));
                     j.Prop("relayEndpoint", s.RelayEndpoint);
+                    j.Prop("relayTicket", SessionManager.Short(s.RelayTicket));
+                    j.Prop("localIp", s.LocalIp);
+                    j.Prop("localPort", (long)s.LocalPort);
+                    j.Prop("publicIp", s.PublicIp);
+                    j.Prop("publicPort", (long)s.PublicPort);
+                    j.Prop("natType", (long)s.NatType);
+                    j.Prop("natBehavior", (long)s.NatBehavior);
                     j.Prop("userAgent", s.UserAgent);
                 }
                 j.EndObject();

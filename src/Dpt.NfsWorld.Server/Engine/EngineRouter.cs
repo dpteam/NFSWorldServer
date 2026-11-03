@@ -65,9 +65,59 @@ namespace Dpt.NfsWorld.Engine
                     HandleSecureLoginPersona(req, res);
                     return;
                 }
+                if (lower == "/user/authenticateuser2" || lower == "/user/authenticateusertoken")
+                {
+                    HandleAuthenticate(req, res);
+                    return;
+                }
+                if (lower == "/user/securelogin")
+                {
+                    HandleSecureLogin(req, res);
+                    return;
+                }
+                if (lower == "/user/securelogoutpersona")
+                {
+                    HandleLogout(req, res);
+                    return;
+                }
+                if (lower == "/user/setregion")
+                {
+                    SendEmpty(res, 200);
+                    return;
+                }
+                if (lower == "/user/getuserinfofromsecuritytoken")
+                {
+                    HandleUserInfoFromToken(req, res, profile);
+                    return;
+                }
+                if (lower == "/user/clientconfig" || lower == "/user/logging")
+                {
+                    if (req.Method == "POST") Log.Debug("AUTH", "client " + lower + ": " + Util.Truncate(Text(req.Body), 200));
+                    SendEmpty(res, 200);
+                    return;
+                }
                 if (lower.StartsWith("/user/securelogout", StringComparison.Ordinal) || lower == "/user/logout")
                 {
                     HandleLogout(req, res);
+                    return;
+                }
+
+                // ------------------------------------------------- crypto/relay
+                if (lower == "/crypto/cryptoticket")
+                {
+                    HandleCryptoTicket(req, res);
+                    return;
+                }
+                if (lower.StartsWith("/crypto/relaycryptoticket", StringComparison.Ordinal))
+                {
+                    HandleRelayCryptoTicket(req, res, rel);
+                    return;
+                }
+
+                // ---------------------------------------------------- matchmaking
+                if (lower.StartsWith("/matchmaking/", StringComparison.Ordinal))
+                {
+                    HandleMatchmaking(req, res, profile, rel);
                     return;
                 }
 
@@ -86,7 +136,11 @@ namespace Dpt.NfsWorld.Engine
                 // ------------------------------------------------------- catalog
                 if (lower.StartsWith("/catalog/", StringComparison.Ordinal) || lower.StartsWith("/catalogs/", StringComparison.Ordinal))
                 {
-                    if (!ServeStatic(req, res, profile, rel)) SendText(res, 404, "not found: " + rel);
+                    if (!ServeStatic(req, res, profile, rel))
+                    {
+                        Log.Proto("ENGINE", "catalog endpoint without data: " + rel);
+                        SendEmpty(res, 200);
+                    }
                     return;
                 }
 
@@ -194,9 +248,35 @@ namespace Dpt.NfsWorld.Engine
                     SendEmpty(res, 200);
                     return;
                 }
-                if (lower == "/crypto/cryptoticket" || lower.StartsWith("/settings/", StringComparison.Ordinal))
+                if (lower.StartsWith("/adsrv/", StringComparison.Ordinal) || lower.StartsWith("/impsrv/", StringComparison.Ordinal))
                 {
-                    if (!ServeStatic(req, res, profile, rel)) SendText(res, 404, "not found: " + rel);
+                    SendEmpty(res, 200);
+                    return;
+                }
+                if (lower == "/servertime")
+                {
+                    SendXml(res, "<long>" + Util.UnixNow.ToString(CultureInfo.InvariantCulture) + "</long>");
+                    return;
+                }
+                if (lower == "/powerups")
+                {
+                    Persona pu = CurrentPersona(req);
+                    if (pu != null) { SendXml(res, EngineXml.Inventory(pu)); return; }
+                    if (!ServeStatic(req, res, profile, rel)) SendXml(res, "<ArrayOfProductTrans/>");
+                    return;
+                }
+                if (lower.StartsWith("/settings/", StringComparison.Ordinal))
+                {
+                    if (!ServeStatic(req, res, profile, rel)) SendEmpty(res, 200);
+                    return;
+                }
+                if (IsOptionalEndpoint(lower))
+                {
+                    if (!ServeStatic(req, res, profile, rel))
+                    {
+                        Log.Proto("ENGINE", "optional endpoint without data: " + rel);
+                        SendEmpty(res, 200);
+                    }
                     return;
                 }
 
@@ -479,6 +559,27 @@ namespace Dpt.NfsWorld.Engine
                 return;
             }
 
+            if (lower == "/driverpersona/unreservename")
+            {
+                SendEmpty(res, 200);
+                return;
+            }
+            if (lower == "/driverpersona/getpersonapresencebyname")
+            {
+                string name = req.QueryString("displayName");
+                Persona found = _db.FindPersonaByName(DataStore.CleanPersonaName(name));
+                if (found == null) SendXml(res, "<ArrayOfPersonaBase/>");
+                else SendXml(res, EngineXml.PersonaBaseList(new List<Persona>(new Persona[] { found })));
+                return;
+            }
+            if (lower == "/driverpersona/updatepersonapresence")
+            {
+                Persona pp = CurrentPersona(req);
+                if (pp != null) _db.TouchPersona(pp);
+                SendEmpty(res, 200);
+                return;
+            }
+
             Log.Warn("PERSONA", "unhandled DriverPersona call " + rel);
             SendEmpty(res, 200);
         }
@@ -492,6 +593,14 @@ namespace Dpt.NfsWorld.Engine
                 Persona p = CurrentPersona(req);
                 if (p == null) { SendEmpty(res, 404); return; }
                 SendXml(res, EngineXml.Inventory(p));
+                return;
+            }
+            if (seg.Length >= 2 && string.Equals(seg[1], "defaultcars", StringComparison.OrdinalIgnoreCase))
+            {
+                Persona dp = CurrentPersona(req);
+                Car dc = dp == null ? null : dp.CurrentCar;
+                if (dc != null) SendXml(res, EngineXml.OwnedCar(dc));
+                else SendXml(res, "<ArrayOfOwnedCarTrans/>");
                 return;
             }
             if (seg.Length < 3)
@@ -546,6 +655,27 @@ namespace Dpt.NfsWorld.Engine
                 long carId = Util.ParseLong(rest.Substring("defaultcar/".Length), 0);
                 _db.SetCurrentCar(persona, carId);
                 SendEmpty(res, 200);
+                return;
+            }
+            if (rest.StartsWith("cars/", StringComparison.Ordinal))
+            {
+                long carId = Util.ParseLong(rest.Substring("cars/".Length), 0);
+                Car one = _db.FindCar(persona, carId);
+                if (one == null) { SendEmpty(res, 404); return; }
+                SendXml(res, EngineXml.OwnedCar(one));
+                return;
+            }
+            if (rest.StartsWith("inventory/sell", StringComparison.Ordinal))
+            {
+                Log.Info("PERSONA", "inventory sell from " + persona.Name + ": " + rel);
+                SendEmpty(res, 200);
+                return;
+            }
+            if (rest == "mydefaultcar")
+            {
+                Car cur = persona.CurrentCar;
+                if (cur == null) { SendEmpty(res, 404); return; }
+                SendXml(res, EngineXml.OwnedCar(cur));
                 return;
             }
             if (rest == "defaultcar")
@@ -701,11 +831,6 @@ namespace Dpt.NfsWorld.Engine
         private void HandleEvents(HttpRequest req, HttpResponse res, string lower)
         {
             Persona p = CurrentPersona(req);
-            if (lower.StartsWith("/matchmaking/", StringComparison.Ordinal))
-            {
-                SendXml(res, "<ArrayOfEventDefinition/>");
-                return;
-            }
             if (lower.Contains("gettreasurehunteventsession"))
             {
                 SendXml(res, EngineXml.TreasureHunt());
@@ -735,12 +860,175 @@ namespace Dpt.NfsWorld.Engine
                              "</PursuitEventResult>");
                 return;
             }
-            if (lower.Contains("launched") || lower.Contains("notifycoincollected") || lower.Contains("accolade"))
+            if (lower.Contains("availableatlevel"))
+            {
+                if (!ServeStatic(req, res, CurrentProfile(req), "/events/availableatlevel")) SendXml(res, "<ArrayOfEventDefinition/>");
+                return;
+            }
+            if (lower.Contains("accolade"))
+            {
+                SendXml(res, "<ArrayOfAccoladeDefinition/>");
+                return;
+            }
+            if (lower.Contains("launched") || lower.Contains("notifycoincollected") || lower.Contains("abort") || lower.Contains("pausedetected"))
             {
                 SendEmpty(res, 200);
                 return;
             }
             Send30Empty(res);
+        }
+
+        // ==================================================== auth / nat / crypto
+
+        /// <summary>
+        /// User/SecureLogin: the client reports its NAT picture here. We keep it on the
+        /// session so the admin board can show who is behind CGNAT/hairpin before the
+        /// relay ticket is even requested.
+        /// </summary>
+        private void HandleSecureLogin(HttpRequest req, HttpResponse res)
+        {
+            PlayerSession s = _sessions.Resolve(req);
+            if (s == null)
+            {
+                // some builds call SecureLogin before the persona is bound
+                Account acc = _db.Authenticate("driver_" + SafeMachine(req.QueryString("userId")), "", true, false);
+                s = _sessions.Create(acc, req.RemoteIp, req.Header("User-Agent"), "");
+            }
+            if (s != null)
+            {
+                _sessions.SetNatInfo(s,
+                    req.QueryString("localIp"), Util.ParseInt(req.QueryString("localPort"), 0),
+                    req.QueryString("publicIp"), Util.ParseInt(req.QueryString("publicPort"), 0),
+                    Util.ParseInt(req.QueryString("natType"), 0),
+                    Util.ParseInt(req.QueryString("natBehavior"), 0),
+                    Util.ParseInt(req.QueryString("natIncrement"), 0));
+                s.LastSeenUtc = DateTime.UtcNow;
+            }
+            Log.Info("SESSION", "SecureLogin from " + Describe(req) +
+                                 " local=" + req.QueryString("localIp") + ":" + req.QueryString("localPort") +
+                                 " public=" + req.QueryString("publicIp") + ":" + req.QueryString("publicPort") +
+                                 " nat=" + req.QueryString("natType"));
+            SendEmpty(res, 200);
+        }
+
+        private void HandleUserInfoFromToken(HttpRequest req, HttpResponse res, ClientProfile profile)
+        {
+            PlayerSession s = _sessions.Resolve(req);
+            if (s == null) { SendEmpty(res, 401); return; }
+            Account account = _db.FindAccountById(s.AccountId);
+            SendXml(res, EngineXml.UserInfo(_db.PersonasOf(account), s.AccountId, s.Token, profile));
+        }
+
+        /// <summary>
+        /// crypto/cryptoticket: client/server session key. The 2010/2011 engine only
+        /// uses it for the relay handshake, the game itself is plain HTTP, so a stable
+        /// random ticket is enough to keep the client happy.
+        /// </summary>
+        private void HandleCryptoTicket(HttpRequest req, HttpResponse res)
+        {
+            byte[] ticket = new byte[16];
+            byte[] iv = new byte[16];
+            using (System.Security.Cryptography.RNGCryptoServiceProvider rng = new System.Security.Cryptography.RNGCryptoServiceProvider())
+            {
+                rng.GetBytes(ticket);
+                rng.GetBytes(iv);
+            }
+            StringBuilder sb = new StringBuilder(256);
+            sb.Append("<CryptoTicket><Ticket>").Append(Convert.ToBase64String(ticket));
+            sb.Append("</Ticket><TicketIv>").Append(Convert.ToBase64String(iv));
+            sb.Append("</TicketIv></CryptoTicket>");
+            SendXml(res, sb.ToString());
+            Log.Proto("CRYPTO", "cryptoticket issued to " + Describe(req));
+        }
+
+        /// <summary>
+        /// crypto/relaycryptoticket/{personaId}: tells the client which UDP relay to use.
+        /// This is the hook the relay needed all along - proven by the client strings
+        /// "Relay::SetServer(): UDP Relay Server=%s:%d" and /crypto/relaycryptoticket/.
+        /// </summary>
+        private void HandleRelayCryptoTicket(HttpRequest req, HttpResponse res, string rel)
+        {
+            PlayerSession s = _sessions.Resolve(req);
+            string personaId = rel.Substring(rel.LastIndexOf('/') + 1);
+            long pid = Util.ParseLong(personaId, 0);
+            if (pid <= 0 && s != null) pid = s.PersonaId;
+
+            string host = RelayHost(req);
+            int port = _app.Relay == null || !_app.Relay.IsRunning ? _cfg.RelayPort : _app.Relay.Port;
+            string ticket = _app.Relay == null ? Util.ShortToken(16) : _app.Relay.CreateTicket(pid);
+            if (s != null) { s.RelayTicket = ticket; s.Relay = true; s.RelayEndpoint = host + ":" + port; }
+
+            StringBuilder sb = new StringBuilder(512);
+            sb.Append("<ArrayOfUdpRelayInfo><UdpRelayInfo>");
+            sb.Append("<UdpRelayHost>").Append(Util.EscapeXml(host)).Append("</UdpRelayHost>");
+            sb.Append("<UdpRelayPort>").Append(port.ToString(CultureInfo.InvariantCulture)).Append("</UdpRelayPort>");
+            sb.Append("<UdpRelayCryptoTicket>").Append(Util.EscapeXml(ticket)).Append("</UdpRelayCryptoTicket>");
+            sb.Append("<UdpRelayBandwidthInBps>").Append(_cfg.RelayBandwidthBps.ToString(CultureInfo.InvariantCulture)).Append("</UdpRelayBandwidthInBps>");
+            sb.Append("<UdpRelayTimeoutInMilliseconds>").Append((_cfg.RelayIdleSeconds * 1000L).ToString(CultureInfo.InvariantCulture)).Append("</UdpRelayTimeoutInMilliseconds>");
+            sb.Append("</UdpRelayInfo></ArrayOfUdpRelayInfo>");
+            SendXml(res, sb.ToString());
+            Log.Info("RELAY", "relay ticket for persona " + pid + " -> " + host + ":" + port);
+        }
+
+        private string RelayHost(HttpRequest req)
+        {
+            if (!string.IsNullOrEmpty(_cfg.RelayPublicHost)) return _cfg.RelayPublicHost;
+            string host = null;
+            if (!string.IsNullOrEmpty(_cfg.PublicUrl))
+            {
+                try { host = new Uri(_cfg.PublicUrl).Host; } catch { host = null; }
+            }
+            if (string.IsNullOrEmpty(host)) host = RequestHost(req);
+            return host;
+        }
+
+        private void HandleMatchmaking(HttpRequest req, HttpResponse res, ClientProfile profile, string rel)
+        {
+            PlayerSession s = _sessions.Resolve(req);
+            string lower = rel.ToLowerInvariant();
+            if (lower.StartsWith("/matchmaking/launchevent", StringComparison.Ordinal) ||
+                lower.StartsWith("/matchmaking/joinqueue", StringComparison.Ordinal) ||
+                lower.StartsWith("/matchmaking/makeprivatelobby", StringComparison.Ordinal))
+            {
+                if (ServeStatic(req, res, profile, rel)) return;
+                // tell the client "no race yet" instead of a malformed object
+                SendEmpty(res, 200);
+                Log.Info("EVENT", "matchmaking " + rel + " from " + Describe(req) + " (no race configured)");
+                return;
+            }
+            if (lower.StartsWith("/matchmaking/leave", StringComparison.Ordinal) ||
+                lower.StartsWith("/matchmaking/acceptinvite", StringComparison.Ordinal) ||
+                lower.StartsWith("/matchmaking/declineinvite", StringComparison.Ordinal) ||
+                lower.StartsWith("/matchmaking/invitetoprivatelobby", StringComparison.Ordinal))
+            {
+                SendEmpty(res, 200);
+                return;
+            }
+            if (ServeStatic(req, res, profile, rel)) return;
+            SendXml(res, "<ArrayOfEventDefinition/>");
+        }
+
+        private static readonly string[] OptionalEndpoints = new string[]
+        {
+            "/description", "/getshardinfo", "/getregioninfo", "/launcherinfo", "/heartbeatlauncher",
+            "/carclasses", "/loginannouncements/imagespath", "/newsarticles", "/getsocialnetworkinfo",
+            "/setusersettings", "/setsocialsettings", "/getpersonaidsfromuserids", "/addfriendrequest",
+            "/removefriend", "/resolvefriendsrequest", "/blockplayer", "/unblockplayer", "/social/petition",
+            "/security/", "/commerce/reportstorefailure", "/progressionamplifiers/reapply", "/gifts/",
+            "/catalog/catalogversion", "/catalog/categories", "/catalog/personalizedproducts",
+            "/catalog/products", "/catalog/productsinCategory"
+        };
+
+        private static bool IsOptionalEndpoint(string lower)
+        {
+            for (int i = 0; i < OptionalEndpoints.Length; i++)
+                if (lower.StartsWith(OptionalEndpoints[i], StringComparison.Ordinal)) return true;
+            return false;
+        }
+
+        private ClientProfile CurrentProfile(HttpRequest req)
+        {
+            return _profiles.Resolve(req.Path, req.Header("User-Agent"));
         }
 
         // ============================================================== helpers
@@ -793,16 +1081,38 @@ namespace Dpt.NfsWorld.Engine
             return "http://" + RequestHost(req) + ":" + _cfg.EnginePort.ToString(CultureInfo.InvariantCulture);
         }
 
+        private string ResolveAnyFile(ClientProfile profile, string rel)
+        {
+            string clean = (rel ?? "").TrimStart('/');
+            string file = profile == null ? null : profile.ResolveFile(clean);
+            if (file == null)
+            {
+                ClientProfile alt = _profiles.FindWithFile(clean);
+                if (alt != null) file = alt.ResolveFile(clean);
+            }
+            if (file == null)
+            {
+                string defaults = Path.Combine(_cfg.DataDir, "defaults");
+                file = TryFile(Path.Combine(defaults, "Engine.svc", clean.Replace('/', '\\')));
+                if (file == null) file = TryFile(Path.Combine(defaults, clean.Replace('/', '\\')));
+            }
+            if (file == null && clean.IndexOf('.') < 0)
+                return ResolveAnyFile(profile, clean + ".xml");
+            return file;
+        }
+
+        private static string TryFile(string path)
+        {
+            try { if (File.Exists(path)) return path; }
+            catch { }
+            return null;
+        }
+
         private bool ServeStatic(HttpRequest req, HttpResponse res, ClientProfile profile, string rel)
         {
             if (!_cfg.StaticFallback) return false;
-            string file = profile == null ? null : profile.ResolveFile(rel);
-            if (file == null || !File.Exists(file))
-            {
-                ClientProfile alt = _profiles.FindWithFile(rel.TrimStart('/'));
-                if (alt != null) file = alt.ResolveFile(rel);
-            }
-            if (file == null || !File.Exists(file)) return false;
+            string file = ResolveAnyFile(profile, rel);
+            if (file == null) return false;
 
             try
             {

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
 using Dpt.NfsWorld.Core;
@@ -23,6 +23,14 @@ namespace Dpt.NfsWorld.Engine
         public bool Xmpp;
         public bool Relay;
         public string RelayEndpoint = "";
+        public string LocalIp = "";
+        public int LocalPort;
+        public string PublicIp = "";
+        public int PublicPort;
+        public int NatType;
+        public int NatBehavior;
+        public int NatIncrement;
+        public string RelayTicket = "";
         public bool Banned;
         public string KickReason = "";
 
@@ -134,6 +142,23 @@ namespace Dpt.NfsWorld.Engine
             }
             Log.Info("SESSION", "persona bound: " + p.Name + " (#" + p.Id + ") token=" + Short(s.Token));
             return true;
+        }
+
+        public void SetNatInfo(PlayerSession s, string localIp, int localPort, string publicIp, int publicPort, int natType, int natBehavior, int natIncrement)
+        {
+            if (s == null) return;
+            lock (_sync)
+            {
+                s.LocalIp = localIp ?? "";
+                s.LocalPort = localPort;
+                s.PublicIp = publicIp ?? "";
+                s.PublicPort = publicPort;
+                s.NatType = natType;
+                s.NatBehavior = natBehavior;
+                s.NatIncrement = natIncrement;
+                s.LastSeenUtc = DateTime.UtcNow;
+            }
+            Log.Info("SESSION", "NAT info: local " + s.LocalIp + ":" + s.LocalPort + " public " + s.PublicIp + ":" + s.PublicPort + " type=" + natType + " behavior=" + natBehavior + " increment=" + natIncrement);
         }
 
         public void UnbindPersona(PlayerSession s)

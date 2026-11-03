@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Net;
@@ -66,6 +66,7 @@ namespace Dpt.NfsWorld.Net
         private readonly object _sync = new object();
         private readonly Dictionary<string, Member> _byEndpoint = new Dictionary<string, Member>(StringComparer.Ordinal);
         private readonly Dictionary<string, Room> _rooms = new Dictionary<string, Room>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, string> _tickets = new Dictionary<string, string>(StringComparer.Ordinal);
 
         private UdpClient _udp;
         private Thread _loop;
@@ -98,6 +99,29 @@ namespace Dpt.NfsWorld.Net
         {
             return "relay:" + _port + " rooms=" + RoomCount + " clients=" + ClientCount +
                    " in=" + Util.Bytes(BytesIn) + " out=" + Util.Bytes(BytesOut);
+        }
+
+        /// <summary>Issues a relay ticket for a persona (crypto/relaycryptoticket).</summary>
+        public string CreateTicket(long personaId)
+        {
+            string ticket = Util.UrlToken(18);
+            lock (_sync)
+            {
+                if (_tickets.Count > 4096) _tickets.Clear();
+                _tickets[ticket] = personaId.ToString(CultureInfo.InvariantCulture);
+            }
+            Log.Proto("RELAY", "ticket issued to persona " + personaId + " (" + Util.Truncate(ticket, 10) + "...)");
+            return ticket;
+        }
+
+        public string FindTicketOwner(string ticket)
+        {
+            if (string.IsNullOrEmpty(ticket)) return null;
+            lock (_sync)
+            {
+                string owner;
+                return _tickets.TryGetValue(ticket, out owner) ? owner : null;
+            }
         }
 
         public int RoomCount { get { lock (_sync) return _rooms.Count; } }

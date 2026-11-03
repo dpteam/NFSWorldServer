@@ -57,10 +57,15 @@ relay    44610  <-- UDP-релей для NAT hairpin / CGNAT             (UDP)
   автообновление, всё живёт на localStorage.
 
 **Лаунчер (`NFSWorldLauncher.exe`, MSHTML)**
-- Адрес сервера, путь к `nfsw.exe`, регион, доп. аргументы; проверка `/api/health`,
-  статус и новости; кнопка **Play** запускает
+- Список серверов: «Локальный сервер» (поднимает `NFSWorldServer.exe --offline`) и
+  `DPT.Server (домен)`; свои серверы добавляются кнопкой «+», удаляются «×», выбор
+  сохраняется в `launcher.ini`.
+- Локальный режим: отдельные порты (44620–44630), свой state в `data/offline`, loopback-only —
+  можно играть оффлайн, не мешая публичному серверу.
+- Проверка сервера асинхронная (не блокирует окно), статус, онлайн, новости, сервисы.
+- Путь к `nfsw.exe`, регион, доп. аргументы; **Играть** запускает
   `nfsw.exe US http://host:44600/Engine.svc a 1`.
-- Настройки в `launcher.ini`, IE-режим включается в HKCU (без админа).
+- Настройки пишутся на каждое изменение (и в `launcher.log` видно, что и когда сохранилось).
 
 **Надёжность**
 - Supervisor перезапускает engine/XMPP/relay/обе доски с экспоненциальным backoff.
@@ -80,6 +85,17 @@ run.cmd
 2. Админка: `http://localhost:44602/` → токен из `bin\config.ini` (`web.adminToken`),
    при первом запуске генерируется и печатается в консоль.
 3. Лаунчер: `bin\NFSWorldLauncher.exe` (или `launcher.cmd`).
+
+### Оффлайн-режим
+
+```bat
+bin\NFSWorldServer.exe --offline
+```
+
+Поднимает локальный сервер на loopback: engine `44620`, public `44621`, admin `44622`,
+EA-Chat `44623`, relay `44630`, состояние в `data/offline/state`, логи в `logs/offline`.
+Можно держать одновременно с публичным сервером — порты и сохранения не пересекаются.
+Лаунчер делает это сам, если выбран «Локальный сервер».
 
 ### Открыть с другого ПК в локалке
 
@@ -160,6 +176,21 @@ powershell -File tools\ci-test.ps1         :: всё сразу: сборка + 
 
 `tools\ci-test.ps1` — то же, что делает CI: возвращает код выхода и печатает хвост лога при падении.
 
+## CI и релизы
+
+`.github/workflows/build.yml` (GitHub Actions, `windows-latest`):
+
+1. проверяет `csc.exe` и число профилей клиентов;
+2. `tools\ci-test.ps1` — сборка → старт → engine (49 проверок) + relay (14) + XMPP (13);
+3. `NFSWorldLauncher.exe --selftest` — настройки, URL, логи (без UI);
+4. смоук `--offline` — health на 44620 и создание `data\offline\state`;
+5. пакует `bin\*` в `NFSWorldServer-win.zip` без `config.ini`, `launcher.ini`, логов,
+   `data\state` и `data\offline`;
+6. на теге `v*` создаёт GitHub Release и прикладывает zip.
+
+Локально всё то же: `powershell -File tools\ci-test.ps1`.
+Лаунчер без окна: `bin\NFSWorldLauncher.exe --selftest` → `bin\launcher-selftest.txt`.
+
 ## Логи
 
 ```
@@ -215,8 +246,12 @@ docs/                               архитектура, протокол, в
   Арбитраж гоночных результатов (`event/arbitrate`, `bust`) пока принимает результат и
   начисляет награды по настройкам, но не проверяет гоночную симуляцию — это следующий шаг.
 - **EA-Chat** реализует ровно те станзы, что шлёт клиент. Это не общий XMPP-сервер.
-- **Relay** пересылает непрозрачные датаграммы; клиент должен быть направлен на релей
-  (интеграция с матчмейкингом — в `docs/RELAY.md`).
+- **Relay** теперь подключается к матчмейкингу: клиент получает адрес релея из
+  `/Engine.svc/crypto/relaycryptoticket/{personaId}` (`UdpRelayHost`/`UdpRelayPort`), а не
+  из воздуха. Формат самих UDP-кадров релея ещё не подтверждён на живом клиенте —
+  снимается логом (`docs/RELAY.md`, `docs/REVERSE-ENGINEERING.md`).
+- Как клиент ходит в Engine.svc и что осталось неизвестным — `docs/REVERSE-ENGINEERING.md`
+  (полный список endpoint'ов, строки relay, SHA-256 исследованных бинарников).
 - TLS для EA-Chat — **TLS 1.0**, потому что это единственное, что понимает клиент 2010/2011.
   На Windows 10/11 может понадобиться `tools\enable-tls10.ps1`.
 - Клиент не проверяет сертификат: используется самоподписанный `xmpp.pfx` (пароль `nfsw`).

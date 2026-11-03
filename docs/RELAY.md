@@ -53,17 +53,37 @@ RELAY hairpin: 203.0.113.5:51234(1001) and 203.0.113.5:51235(1002) share public 
 
 ## Как направить игрока на релей
 
-Сейчас релей — транспорт с явной регистрацией. Варианты интеграции:
+Клиент умеет это сам. В `nfsw.exe` есть `Relay::SetServer` и `relay_session`, а адрес он
+получает от сервера:
 
-1. **Матчмейкинг**: ответ `matchmaking/launchevent` (или ваш собственный `GetServerInformation`)
-   отдаёт не адрес пира, а `relay:44610` + имя комнаты; клиент/патч шлёт `REGISTER`.
-2. **Лаунчер**: может передавать `-relay host:port` в аргументах, если сборка это понимает.
-3. **Прозрачно для серверных сценариев**: сервер сам открывает UDP-сокеты к игрокам и
-   пересылает между ними через свой релей-сокет (следующий шаг, требует знания формата
-   гоночных пакетов).
+```
+GET /Engine.svc/crypto/relaycryptoticket/{personaId}
+  -> <ArrayOfUdpRelayInfo><UdpRelayInfo>
+       <UdpRelayHost>nfsw.dartpower.xyz</UdpRelayHost>
+       <UdpRelayPort>44610</UdpRelayPort>
+       <UdpRelayCryptoTicket>...</UdpRelayCryptoTicket>
+       <UdpRelayBandwidthInBps>9600</UdpRelayBandwidthInBps>
+       <UdpRelayTimeoutInMilliseconds>600000</UdpRelayTimeoutInMilliseconds>
+     </UdpRelayInfo></ArrayOfUdpRelayInfo>
+```
 
-Пока протокол не подтверждён на живом клиенте, релей остаётся **опциональным**:
-`relay.enabled=false` его полностью выключает, игра без него работает как обычно.
+`DPT.Server` уже отвечает так: host берётся из `relay.publicHost` (или хоста
+`server.publicUrl`), порт — из фактически занятого `relay.port`, тикет выдаёт
+`RelayServer.CreateTicket`. После этого клиент сам открывает UDP к релею и шлёт
+`gameinfo`/`Loading Init`/countdown — пока мы эти кадры только логируем (hex в
+`logs/nfsw-*.log` при `logging.protocolTrace=true`).
+
+Плюс `User/SecureLogin` присылает `localIp/localPort/publicIp/publicPort/natType` —
+точные данные, по которым сервер может решать, кому нужен релей (а не угадывать по IP).
+В админке они видны у игрока.
+
+### Что ещё не сделано
+
+Формат UDP-кадров релея (`gameid`, `peermask`, loading/countdown, шифрование по
+`relay_crypto_ticket`) статикой не подтверждён. Порядок действий — в
+`docs/REVERSE-ENGINEERING.md`: запустить клиент, снять лог, добавить разбор в
+`RelayServer`. Пока релей пересылает непрозрачные датаграммы и умеет собственную
+регистрацию `NFSR` для тестов и внешних интеграций.
 
 ## Проверка
 

@@ -108,6 +108,19 @@ GET  /matchmaking/*          -> <ArrayOfEventDefinition/>
 Награды начисляются по `engine.rewardCashPerEvent` / `engine.rewardRepPerEvent`
 (по умолчанию 0 — значения клиента не перетираются до реализации проверки симуляции).
 
+## Крипто, relay и NAT
+
+```
+GET  /crypto/cryptoticket                  -> <CryptoTicket><Ticket>..</Ticket><TicketIv>..</TicketIv></CryptoTicket>
+GET  /crypto/relaycryptoticket/{personaId} -> <ArrayOfUdpRelayInfo> с UdpRelayHost/Port/CryptoTicket
+POST /User/SecureLogin?localIp=&localPort=&publicIp=&publicPort=&natType=&natBehavior=&natIncrement=
+                                           -> 200, параметры NAT сохраняются в сессии
+```
+
+`relaycryptoticket` — штатный способ направить клиент на UDP relay (см. `docs/RELAY.md`).
+Полный список endpoint'ов, которые клиент реально дёргает (из `gameplay.dll`), —
+`docs/REVERSE-ENGINEERING.md`.
+
 ## Прочее
 
 ```

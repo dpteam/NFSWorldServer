@@ -17,7 +17,7 @@
       <div class="hero-sub">Need For Speed World</div>
     </div>
     <div class="hero-right">
-      <span class="pill" id="statusPill"><span class="dot" id="statusDot"></span> <span id="statusText">checking...</span></span>
+      <span class="pill" id="statusPill"><span class="dot" id="statusDot"></span> <span id="statusText">проверка…</span></span>
       <span class="pill dim" id="versionPill">v{{VERSION}}</span>
     </div>
   </div>
@@ -26,15 +26,22 @@
     <div class="col-main">
 
       <div class="card">
-        <div class="card-head">Server</div>
+        <div class="card-head">Сервер</div>
         <div class="card-body">
-          <label class="lbl" for="serverUrl">Server address</label>
-          <input id="serverUrl" type="text" spellcheck="false" placeholder="http://nfsw.dartpower.xyz">
-          <div class="hint">Domain or full URL. The launcher appends <b>/Engine.svc</b> automatically.</div>
+          <label class="lbl" for="serverSel">Выберите сервер</label>
+          <div class="srv-row">
+            <select id="serverSel"></select>
+            <button type="button" id="btnAddServer" class="btn small" title="Добавить свой сервер">+</button>
+            <button type="button" id="btnDelServer" class="btn small" title="Удалить выбранный">×</button>
+          </div>
 
-          <div class="row">
+          <label class="lbl" for="serverUrl" style="margin-top:9px">Адрес</label>
+          <input id="serverUrl" type="text" spellcheck="false" placeholder="http://nfsw.dartpower.xyz:44600">
+          <div class="hint" id="serverHint">Локальный режим поднимет свой сервер (порты 44620+, отдельные сохранения в data\offline).</div>
+
+          <div class="row" style="margin-top:8px">
             <div class="grow">
-              <label class="lbl" for="region">Region</label>
+              <label class="lbl" for="region">Регион</label>
               <select id="region">
                 <option value="US">US</option>
                 <option value="EU">EU</option>
@@ -42,30 +49,30 @@
               </select>
             </div>
             <div class="grow">
-              <label class="lbl" for="extraArgs">Extra arguments</label>
-              <input id="extraArgs" type="text" spellcheck="false" placeholder="optional">
+              <label class="lbl" for="extraArgs">Доп. аргументы</label>
+              <input id="extraArgs" type="text" spellcheck="false" placeholder="необязательно">
             </div>
           </div>
         </div>
       </div>
 
       <div class="card">
-        <div class="card-head">Game</div>
+        <div class="card-head">Игра</div>
         <div class="card-body">
           <label class="lbl" for="gamePath">nfsw.exe</label>
           <div class="row">
             <input id="gamePath" class="grow" type="text" spellcheck="false" placeholder="nfsw\nfsw.exe">
-            <button id="btnBrowse" class="btn">Browse...</button>
+            <button type="button" id="btnBrowse" class="btn">Обзор…</button>
           </div>
-          <div class="hint" id="gameHint">Leave a relative path if the game folder sits next to the launcher.</div>
+          <div class="hint" id="gameHint">Можно оставить относительный путь, если папка игры рядом с лаунчером.</div>
         </div>
       </div>
 
       <div class="actions">
-        <button id="btnPlay" class="btn primary big">&#9654; Play</button>
-        <button id="btnCheck" class="btn">Check server</button>
-        <button id="btnSave" class="btn">Save</button>
-        <button id="btnSite" class="btn">Public board</button>
+        <button type="button" id="btnPlay" class="btn primary big">&#9654; Играть</button>
+        <button type="button" id="btnCheck" class="btn">Проверить</button>
+        <button type="button" id="btnSave" class="btn">Сохранить</button>
+        <button type="button" id="btnSite" class="btn">Веб-морда</button>
       </div>
 
       <div class="log" id="log"></div>
@@ -75,12 +82,12 @@
     <div class="col-side">
 
       <div class="card">
-        <div class="card-head">Server status</div>
+        <div class="card-head">Статус сервера</div>
         <div class="card-body">
           <table class="kv">
-            <tr><td>drivers online</td><td id="kOnline" class="v">-</td></tr>
-            <tr><td>personas</td><td id="kPersonas" class="v">-</td></tr>
-            <tr><td>relay rooms</td><td id="kRooms" class="v">-</td></tr>
+            <tr><td>игроков онлайн</td><td id="kOnline" class="v">-</td></tr>
+            <tr><td>персонажей</td><td id="kPersonas" class="v">-</td></tr>
+            <tr><td>комнат relay</td><td id="kRooms" class="v">-</td></tr>
             <tr><td>uptime</td><td id="kUptime" class="v">-</td></tr>
             <tr><td>build</td><td id="kVersion" class="v">-</td></tr>
           </table>
@@ -94,25 +101,25 @@
       </div>
 
       <div class="card">
-        <div class="card-head">News</div>
+        <div class="card-head">Новости</div>
         <div class="card-body news" id="newsBox">
           <div class="news-item">
-            <div class="news-title">Welcome to DPT.Server</div>
-            <div class="news-body">Sign in, pick a car and enjoy the streets. Online play, garage and
-              shop are handled by this server.</div>
+            <div class="news-title">Добро пожаловать в DPT.Server</div>
+            <div class="news-body">Выберите сервер слева и нажмите «Играть». Локальный режим поднимает
+              свой сервер с отдельными сохранениями, домен — публичный онлайн.</div>
           </div>
         </div>
       </div>
 
       <div class="card">
-        <div class="card-head">Options</div>
+        <div class="card-head">Опции</div>
         <div class="card-body">
-          <label class="check"><input id="optSound" type="checkbox" checked> notification sounds</label>
-          <label class="check"><input id="optClose" type="checkbox" checked> close launcher when the game starts</label>
+          <label class="check"><input id="optSound" type="checkbox" checked> звуки</label>
+          <label class="check"><input id="optClose" type="checkbox" checked> закрывать лаунчер при старте игры</label>
           <div class="sep"></div>
           <div class="row">
-            <button id="btnTheme" class="btn small">Toggle theme</button>
-            <button id="btnQuit" class="btn small">Quit</button>
+            <button type="button" id="btnTheme" class="btn small">Тема</button>
+            <button type="button" id="btnQuit" class="btn small">Выход</button>
           </div>
         </div>
       </div>
@@ -121,8 +128,8 @@
   </div>
 
   <div class="footer">
-    <span>DPT.Server launcher - MSHTML, no external libraries</span>
-    <span id="connLabel" class="dim">not checked yet</span>
+    <span>DPT.Server launcher · MSHTML · без внешних библиотек</span>
+    <span id="connLabel" class="dim">ещё не проверяли</span>
   </div>
 </div>
 

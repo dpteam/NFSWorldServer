@@ -94,3 +94,53 @@ NFS World
 - Полная интеграция relay с матчмейкингом: нужен подтверждённый формат гоночных пакетов
   на живом клиенте (см. `docs/RELAY.md`).
 - Скриншоты/CI-workflow для GitHub Actions (репозиторий пока локальный).
+
+---
+
+## Итерация 2 — лаунчер 0.2, оффлайн-режим, CI, реверс клиента
+
+Сделано:
+
+- [x] **Лаунчер 0.2**:
+      - список серверов («Локальный сервер» + домен), добавление/удаление своих, выбор
+        сохраняется; локальный режим сам поднимает `NFSWorldServer.exe --offline`;
+      - проверка сервера **асинхронная** (фон + polling), окно больше не висит на
+        «checking…»; статус/онлайн/сервисы/новости;
+      - настройки пишутся на каждое изменение, атомарно (`launcher.ini.tmp` → rename),
+        путь и результат видны в `launcher.log`;
+      - двойной диалог выбора exe вылечен: кнопки `type=button`, boot идемпотентен,
+        `BrowseGame` защищён флагом;
+      - `--selftest` — headless проверка настроек/URL/логов (15 проверок), файл
+        `launcher-selftest.txt`.
+- [x] **Оффлайн-режим сервера** `--offline`: loopback-only, порты 44620/44621/44622/44623/44630,
+      state `data/offline/state`, логи `logs/offline`, publicUrl 127.0.0.1:44620. Можно
+      держать одновременно с публичным сервером.
+- [x] **Console Title**: `DPT.Server / NFS World [ONLINE|OFFLINE] engine … · public … ·
+      admin … · N accounts`, при остановке — `stopping...`.
+- [x] **GitHub Actions** `.github/workflows/build.yml`: csc → `ci-test.ps1` → launcher
+      selftest → offline smoke → zip-артефакт (без конфигов/логов/сейвов) → release по тегу.
+- [x] **Реверс клиента (build 1613)**: REA MCP был не подключён, работал `strings` по
+      ASCII/UTF-16. Из `gameplay.dll` вытащен **полный список endpoint'ов Engine.svc**
+      (включая ранее отсутствовавшие `User/SecureLogin` с NAT, `crypto/*`, matchmaking,
+      achievements/redeemreward, inventory/sell, catalog by params, Gifts,
+      ProgressionAmplifiers, adsrv/impsrv). Документ — `docs/REVERSE-ENGINEERING.md`.
+- [x] **Relay подключён к матчмейкингу**: `crypto/relaycryptoticket/{personaId}` отдаёт
+      `UdpRelayHost/Port/CryptoTicket/Bandwidth/Timeout`; `SecureLogin` сохраняет
+      local/public/NAT в сессии и показывает их в админке. Осталось снять формат UDP-кадров
+      релея живым логом (порядок описан в `docs/REVERSE-ENGINEERING.md`).
+- [x] **Сервер**: реализованы все найденные endpoint'ы (49 проверок в `test-engine`),
+      общие ответы в `data/defaults/Engine.svc` (carclasses, getregioninfo, systeminfo,
+      getrebroadcasters, usersettings, socialsettings, friends, NewsArticles,
+      events/availableatlevel), неизвестные `catalog/*` и опциональные endpoint'ы отдают
+      200 вместо 404, `servertime`, `powerups`.
+- [x] Настройки: `relay.publicHost`, `relay.bandwidthBps`; `build.cmd` копирует
+      `data/defaults`; `build.cmd` больше без BOM (ломал `@echo off` под cmd.exe).
+
+Проверено: `tools\ci-test.ps1` — engine 49, relay 14, xmpp 13, CI all green;
+`NFSWorldLauncher.exe --selftest` — 15/15.
+
+Следующее (нужен запуск игры):
+- снять `SecureLogin`/`relaycryptoticket` и UDP-кадры из `logs/nfsw-*.log`, добавить
+  handshake релея (`gameinfo`, loading, countdown) в `RelayServer`;
+- разобрать XML arbitration-пакетов из `event/arbitration` и считать результаты гонок;
+- по желанию: `leanrea` как skill вместо REA (`npx skills add aicodeking/leanrea -g -a opencode -y`).

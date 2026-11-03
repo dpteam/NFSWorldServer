@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -65,6 +65,8 @@ namespace Dpt.NfsWorld.Core
         public int RelayIdleSeconds = 300;
         public int RelayLifetimeSeconds = 43200;
         public int RelayMaxPacketBytes = 2048;
+        public string RelayPublicHost = "";
+        public int RelayBandwidthBps = 9600;
 
         // ---------------------------------------------------------------- [web]
         public int PublicPort = 44601;
@@ -280,6 +282,8 @@ namespace Dpt.NfsWorld.Core
             RelayIdleSeconds = GetInt("relay.idleSeconds", RelayIdleSeconds);
             RelayLifetimeSeconds = GetInt("relay.lifetimeSeconds", RelayLifetimeSeconds);
             RelayMaxPacketBytes = GetInt("relay.maxPacketBytes", RelayMaxPacketBytes);
+            RelayPublicHost = Get("relay.publicHost", RelayPublicHost);
+            RelayBandwidthBps = GetInt("relay.bandwidthBps", RelayBandwidthBps);
 
             PublicPort = GetInt("web.publicPort", PublicPort);
             PublicPortFallbacks = MergeList(GetIntList("web.publicPortFallbacks"), PublicPortFallbacks);
@@ -466,6 +470,8 @@ namespace Dpt.NfsWorld.Core
                 sb.AppendLine("idleSeconds=" + RelayIdleSeconds.ToString(CultureInfo.InvariantCulture));
                 sb.AppendLine("lifetimeSeconds=" + RelayLifetimeSeconds.ToString(CultureInfo.InvariantCulture));
                 sb.AppendLine("maxPacketBytes=" + RelayMaxPacketBytes.ToString(CultureInfo.InvariantCulture));
+                sb.AppendLine("publicHost=" + RelayPublicHost);
+                sb.AppendLine("bandwidthBps=" + RelayBandwidthBps.ToString(CultureInfo.InvariantCulture));
                 sb.AppendLine("protocolTrace=" + Bool(ProtocolTrace));
                 sb.AppendLine();
                 sb.AppendLine("[web]");

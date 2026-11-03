@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Globalization;
 using System.IO;
 using System.Threading;
@@ -29,12 +29,14 @@ namespace Dpt.NfsWorld
             int? adminPort = null;
             int? xmppPort = null;
             int? relayPort = null;
+            bool offline = false;
 
             for (int i = 0; i < args.Length; i++)
             {
                 string a = args[i] ?? "";
                 string next = i + 1 < args.Length ? args[i + 1] : null;
                 if (Eq(a, "--headless") || Eq(a, "-q")) headless = true;
+                else if (Eq(a, "--offline") || Eq(a, "-o")) offline = true;
                 else if (Eq(a, "--help") || Eq(a, "-h")) { PrintUsage(); return 0; }
                 else if (Eq(a, "--version") || Eq(a, "-v")) { Console.WriteLine(ServerApp.Name + " v" + ServerApp.Version); return 0; }
                 else if (Eq(a, "--level") && next != null) { levelOverride = next; i++; }
@@ -72,6 +74,8 @@ namespace Dpt.NfsWorld
             if (relayPort.HasValue && relayPort.Value > 0) cfg.RelayPort = relayPort.Value;
             cfg.Normalize();
             cfg.EnsureSecrets();
+
+            if (offline) ApplyOfflineDefaults(cfg);
 
             Log.Configure(cfg);
             Banner(cfg);
@@ -164,6 +168,7 @@ namespace Dpt.NfsWorld
             Log.Info("APP", "launcher    : NFSWorldLauncher.exe " + (string.IsNullOrEmpty(cfg.PublicUrl) ? "" : "(url " + cfg.PublicUrl + ")"));
 
             PrintStartupSummary(cfg);
+            UpdateConsoleTitle(cfg, false);
 
             if (!headless)
             {
@@ -186,6 +191,31 @@ namespace Dpt.NfsWorld
             return string.Equals(a, b, StringComparison.OrdinalIgnoreCase);
         }
 
+        private static void ApplyOfflineDefaults(Config cfg)
+        {
+            // Local/offline mode: never touch the network, never share the save file
+            // with the public server. Ports are shifted so both can run side by side.
+            cfg.Bind = "127.0.0.1";
+            cfg.PublicBind = "127.0.0.1";
+            cfg.AdminBind = "127.0.0.1";
+            cfg.RelayBind = "127.0.0.1";
+            cfg.EnginePort = 44620;
+            cfg.EnginePortFallbacks = new int[0];
+            cfg.PublicPort = 44621;
+            cfg.PublicPortFallbacks = new int[0];
+            cfg.AdminPort = 44622;
+            cfg.AdminPortFallbacks = new int[0];
+            cfg.XmppPort = 44623;
+            cfg.XmppPortFallbacks = new int[0];
+            cfg.RelayPort = 44630;
+            cfg.RelayPortFallbacks = new int[0];
+            cfg.StateDir = "data/offline/state";
+            cfg.LogDirName = "logs/offline";
+            cfg.PublicUrl = "http://127.0.0.1:44620";
+            cfg.AdminPrivateOnly = true;
+            cfg.ServerName = "DPT.Server (offline)";
+        }
+
         private static void PrintUsage()
         {
             Console.WriteLine(ServerApp.Name + " v" + ServerApp.Version);
@@ -196,6 +226,7 @@ namespace Dpt.NfsWorld
             Console.WriteLine("  --relay-port N    UDP relay (default 44610)");
             Console.WriteLine("  --profile NAME    force a client profile (auto by default)");
             Console.WriteLine("  --level X         Error|Warn|Info|Debug|Verbose");
+            Console.WriteLine("  --offline         local only: loopback bind, ports 44620-44630, data/offline state");
             Console.WriteLine("  --headless        no interactive console");
             Console.WriteLine("  --firewall        print the netsh commands and exit");
             Console.WriteLine("  --help, --version");
@@ -218,6 +249,26 @@ namespace Dpt.NfsWorld
                                   " | xmpp " + cfg.XmppPort + " | relay " + cfg.RelayPort);
                 Console.WriteLine("  .NET 4.0 / C# 4 - Windows XP SP3 ready - no external libraries");
                 Console.WriteLine();
+            }
+            catch { }
+        }
+
+        private static void UpdateConsoleTitle(Config cfg, bool stopping)
+        {
+            try
+            {
+                if (stopping)
+                {
+                    Console.Title = "DPT.Server / NFS World - stopping...";
+                    return;
+                }
+                string mode = cfg.StateDir.IndexOf("offline", StringComparison.OrdinalIgnoreCase) >= 0 ? "OFFLINE" : "ONLINE";
+                int engine = _app != null && _app.Engine != null && _app.Engine.Port > 0 ? _app.Engine.Port : cfg.EnginePort;
+                int pub = _app != null && _app.WebPublic != null && _app.WebPublic.Port > 0 ? _app.WebPublic.Port : cfg.PublicPort;
+                int adm = _app != null && _app.WebAdmin != null && _app.WebAdmin.Port > 0 ? _app.WebAdmin.Port : cfg.AdminPort;
+                int accounts = _app != null && _app.Db != null ? _app.Db.AccountCount : 0;
+                Console.Title = "DPT.Server / NFS World [" + mode + "]  engine " + engine +
+                                " · public " + pub + " · admin " + adm + " · " + accounts + " accounts";
             }
             catch { }
         }
@@ -303,6 +354,7 @@ namespace Dpt.NfsWorld
         {
             if (_app == null) return;
             _app.ShuttingDown = true;
+            UpdateConsoleTitle(_app.Cfg, true);
             Log.Info("APP", "shutdown requested");
 
             try { if (_supervisor != null) _supervisor.Stop(); } catch { }

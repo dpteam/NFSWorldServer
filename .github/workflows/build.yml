@@ -1,0 +1,114 @@
+name: build
+
+# Builds with the stock .NET Framework 4.x csc.exe (no NuGet, no MSBuild),
+# runs the launcher self-test, then starts the server and runs the engine,
+# relay and EA-Chat suites against it.
+
+on:
+  push:
+    branches: [ master, main ]
+    tags: [ 'v*' ]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Toolchain
+        shell: pwsh
+        run: |
+          $csc = "$env:WINDIR\Microsoft.NET\Framework64\v4.0.30319\csc.exe"
+          if (-not (Test-Path $csc)) { throw "csc.exe from .NET Framework 4.x not found" }
+          "csc: $csc"
+          (Get-Item $csc).VersionInfo.FileVersion
+          "PS: " + $PSVersionTable.PSVersion
+          "profiles: " + ((Get-ChildItem data\profiles -Directory).Count) + " client builds"
+
+      - name: Build and test
+        shell: powershell
+        run: .\tools\ci-test.ps1
+
+      - name: Launcher self-test
+        shell: powershell
+        run: |
+          $p = Start-Process -FilePath ".\bin\NFSWorldLauncher.exe" -ArgumentList "--selftest" -Wait -PassThru
+          Get-Content .\bin\launcher-selftest.txt -ErrorAction SilentlyContinue
+          if ($p.ExitCode -ne 0) { throw "launcher self-test failed" }
+
+      - name: Offline mode smoke test
+        shell: powershell
+        run: |
+          $exe = ".\bin\NFSWorldServer.exe"
+          $p = Start-Process -FilePath $exe -WorkingDirectory ".\bin" -ArgumentList @("--offline", "--headless") -PassThru
+          try {
+            $ok = $false
+            for ($i = 0; $i -lt 40; $i++) {
+              try {
+                $r = Invoke-WebRequest -UseBasicParsing -Uri "http://127.0.0.1:44620/api/health" -TimeoutSec 2
+                if ($r.StatusCode -eq 200) { $ok = $true; break }
+              } catch { Start-Sleep -Milliseconds 500 }
+            }
+            if (-not $ok) { throw "offline server did not answer on 44620" }
+            $state = Invoke-WebRequest -UseBasicParsing -Uri "http://127.0.0.1:44620/api/status" -TimeoutSec 5
+            $json = [Text.Encoding]::UTF8.GetString($state.RawContentStream.ToArray()) | ConvertFrom-Json
+            if (-not $json.ok) { throw "offline status not ok" }
+            if (-not (Test-Path ".\bin\data\offline\state")) { throw "offline state folder was not created" }
+            "offline mode: ok (port 44620, data\offline)"
+          } finally {
+            Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
+          }
+
+      - name: Package
+        if: success()
+        shell: pwsh
+        run: |
+          # runtime-only files: never ship tokens, saves, logs or launcher settings
+          Remove-Item bin\config.ini -ErrorAction SilentlyContinue
+          Remove-Item bin\launcher.ini -ErrorAction SilentlyContinue
+          Remove-Item bin\launcher.log -ErrorAction SilentlyContinue
+          Remove-Item bin\launcher-selftest.txt -ErrorAction SilentlyContinue
+          Remove-Item bin\logs -Recurse -Force -ErrorAction SilentlyContinue
+          Remove-Item bin\data\offline -Recurse -Force -ErrorAction SilentlyContinue
+          Remove-Item bin\data\state -Recurse -Force -ErrorAction SilentlyContinue
+          Remove-Item bin\ci-out.txt, bin\ci-err.txt, bin\ci-server-tail.log -ErrorAction SilentlyContinue
+          Compress-Archive -Path bin\* -DestinationPath NFSWorldServer-win.zip -Force
+          Get-Item NFSWorldServer-win.zip | Select-Object Name, Length
+
+      - name: Upload artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: NFSWorldServer-win
+          path: NFSWorldServer-win.zip
+          if-no-files-found: error
+
+      - name: Upload server logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: logs
+          path: |
+            bin/logs
+            bin/launcher.log
+          if-no-files-found: ignore
+
+      - name: Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view $env:GITHUB_REF_NAME *> $null
+          if ($LASTEXITCODE -ne 0) {
+            gh release create $env:GITHUB_REF_NAME NFSWorldServer-win.zip --title $env:GITHUB_REF_NAME --generate-notes
+          } else {
+            gh release upload $env:GITHUB_REF_NAME NFSWorldServer-win.zip --clobber
+          }
