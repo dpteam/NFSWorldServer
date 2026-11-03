@@ -1,0 +1,18 @@
+<ArrayOfNewsItem
+        xmlns="http://schemas.datacontract.org/2004/07/EA.NFSWO.ENGINE.TransferObjects.News"
+        xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+    <NewsItem>
+        <newsId>347362</newsId>
+        <parameters>&lt;NewsItem_FriendLeveledUp&gt;&lt;level&gt;6&lt;/level&gt;&lt;/NewsItem_FriendLeveledUp&gt;</parameters>
+        <personaId>200</personaId>
+        <timestamp>634159463560000000</timestamp>
+        <type>2</type>
+    </NewsItem>
+    <NewsItem>
+        <newsId>343198</newsId>
+        <parameters>&lt;NewsItem_FriendRequestReceived&gt;&lt;targetPersona&gt;100&lt;/targetPersona&gt;&lt;/NewsItem_FriendRequestReceived&gt;</parameters>
+        <personaId>200</personaId>
+        <timestamp>634159450780000000</timestamp>
+        <type>1</type>
+    </NewsItem>
+</ArrayOfNewsItem>

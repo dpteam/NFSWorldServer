@@ -1,0 +1,21 @@
+<ProductTrans>
+    <BundleItems i:nil="true"/>
+    <CategoryId i:nil="true"/>
+    <Currency>_NS</Currency>
+    <Description>Using this during a Race sends traffic cars into the leader.</Description>
+    <DurationMinute>0</DurationMinute>
+    <Hash>125509666</Hash>
+    <Icon>prod_powerup_stack_magne</Icon>
+    <Level>0</Level>
+    <LongDescription>Using this during a Race redirects traffic cars into the race leader's path.</LongDescription>
+    <Price>100.0000</Price>
+    <Priority>32</Priority>
+    <ProductId>SRV-POWERUP1</ProductId>
+    <ProductTitle>TRAFFIC MAGNET x15</ProductTitle>
+    <ProductType>POWERUP</ProductType>
+    <SecondaryIcon/>
+    <UseCount>15</UseCount>
+    <VisualStyle/>
+    <WebIcon/>
+    <WebLocation/>
+</ProductTrans>

@@ -1,0 +1,103 @@
+<ArrayOfProductTrans xmlns="http://schemas.datacontract.org/2004/07/EA.NFSWO.ENGINE.DataLayer.Serialization"
+                     xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+    <ProductTrans>
+        <BundleItems i:nil="true"/>
+        <CategoryId i:nil="true"/>
+        <Currency>_NS</Currency>
+        <Description>GM_CATALOG_000001F9,7</Description>
+        <DurationMinute>10080</DurationMinute>
+        <Hash>1590579111</Hash>
+        <Icon>128_rep</Icon>
+        <Level>0</Level>
+        <LongDescription>GM_CATALOG_00000456,7</LongDescription>
+        <Price>400.0000</Price>
+        <Priority>0</Priority>
+        <ProductId>NFSW-NA:42E95E6B</ProductId>
+        <ProductTitle>GM_CATALOG_00000455,7</ProductTitle>
+        <ProductType>AMPLIFIER</ProductType>
+        <UseCount>0</UseCount>
+        <VisualStyle>0</VisualStyle>
+        <WebIcon>AMP_REP</WebIcon>
+        <WebLocation>HomePage-OtherPromo</WebLocation>
+    </ProductTrans>
+    <ProductTrans>
+        <BundleItems i:nil="true"/>
+        <CategoryId i:nil="true"/>
+        <Currency>_NS</Currency>
+        <Description>GM_CATALOG_000002BA,7</Description>
+        <DurationMinute>10080</DurationMinute>
+        <Hash>8483711</Hash>
+        <Icon>128_rep</Icon>
+        <Level>0</Level>
+        <LongDescription>GM_CATALOG_000005D7,7</LongDescription>
+        <Price>250.0000</Price>
+        <Priority>0</Priority>
+        <ProductId>NFSW-NA:476C938D</ProductId>
+        <ProductTitle>GM_CATALOG_000005D6,7</ProductTitle>
+        <ProductType>AMPLIFIER</ProductType>
+        <UseCount>0</UseCount>
+        <VisualStyle>0</VisualStyle>
+        <WebIcon>AMP_INSURANCE</WebIcon>
+        <WebLocation>HomePage-OtherPromo</WebLocation>
+    </ProductTrans>
+    <ProductTrans>
+        <BundleItems i:nil="true"/>
+        <CategoryId i:nil="true"/>
+        <Currency>_NS</Currency>
+        <Description>GM_CATALOG_00000126,7</Description>
+        <DurationMinute>10080</DurationMinute>
+        <Hash>183412319</Hash>
+        <Icon>128_cash</Icon>
+        <Level>0</Level>
+        <LongDescription>GM_CATALOG_00000446,7</LongDescription>
+        <Price>400.0000</Price>
+        <Priority>0</Priority>
+        <ProductId>NFSW-NA:478E4220</ProductId>
+        <ProductTitle>GM_CATALOG_00000445,7</ProductTitle>
+        <ProductType>AMPLIFIER</ProductType>
+        <UseCount>0</UseCount>
+        <VisualStyle>0</VisualStyle>
+        <WebIcon>AMP_CASH</WebIcon>
+        <WebLocation/>
+    </ProductTrans>
+    <ProductTrans>
+        <BundleItems i:nil="true"/>
+        <CategoryId i:nil="true"/>
+        <Currency>_NS</Currency>
+        <Description>GM_CATALOG_00000519,3</Description>
+        <DurationMinute>4320</DurationMinute>
+        <Hash>525953935</Hash>
+        <Icon>128_cash</Icon>
+        <Level>0</Level>
+        <LongDescription>GM_CATALOG_0000051A,3</LongDescription>
+        <Price>4500.0000</Price>
+        <Priority>12</Priority>
+        <ProductId>NFSW-NA:A66A43AC</ProductId>
+        <ProductTitle>GM_CATALOG_00000518,3</ProductTitle>
+        <ProductType>AMPLIFIER</ProductType>
+        <UseCount>0</UseCount>
+        <VisualStyle>0</VisualStyle>
+        <WebIcon/>
+        <WebLocation/>
+    </ProductTrans>
+    <ProductTrans>
+        <BundleItems i:nil="true"/>
+        <CategoryId i:nil="true"/>
+        <Currency>_NS</Currency>
+        <Description>GM_CATALOG_00000516,3</Description>
+        <DurationMinute>4320</DurationMinute>
+        <Hash>835624850</Hash>
+        <Icon>128_rep</Icon>
+        <Level>0</Level>
+        <LongDescription>GM_CATALOG_00000517,3</LongDescription>
+        <Price>4500.0000</Price>
+        <Priority>11</Priority>
+        <ProductId>NFSW-NA:B7675ADB</ProductId>
+        <ProductTitle>GM_CATALOG_00000515,3</ProductTitle>
+        <ProductType>AMPLIFIER</ProductType>
+        <UseCount>0</UseCount>
+        <VisualStyle>0</VisualStyle>
+        <WebIcon/>
+        <WebLocation/>
+    </ProductTrans>
+</ArrayOfProductTrans>

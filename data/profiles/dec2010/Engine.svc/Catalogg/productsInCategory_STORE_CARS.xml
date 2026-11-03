@@ -1,0 +1,44 @@
+<ArrayOfProductTrans
+        xmlns="http://schemas.datacontract.org/2004/07/EA.NFSWO.ENGINE.DataLayer.Serialization"
+
+        xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+
+    
+<ProductTrans>
+        
+<BundleItems i:nil="true"/>
+  
+<CategoryId i:nil="true"/>      
+<CategoryId>1816139026</CategoryId>
+        
+<Currency>CASH</Currency>
+        
+<Description>GM_CATALOG_0000010F,1</Description>
+        
+<DurationMinute>0</DurationMinute>
+        
+<Hash>-620644234</Hash>
+        
+<Icon/>
+        
+<Level>40</Level>
+        
+<LongDescription>GM_CATALOG_0000010F,1</LongDescription>
+        
+<Price>200000.0000</Price>
+        
+<Priority>0</Priority>
+        
+<ProductId>NFSW-NA:DB01B876</ProductId>
+        
+<ProductTitle>GM_CATALOG_00000103,1</ProductTitle>
+        
+<ProductType>PRESETCAR</ProductType>
+        
+<UseCount>1</UseCount>
+   
+<VisualStyle>0</VisualStyle> 
+<WebIcon/>
+</ProductTrans>
+
+</ArrayOfProductTrans>

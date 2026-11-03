@@ -1,0 +1,57 @@
+# ---------------------------------------------------------------------------
+#  DPT.Server / NFS World - repository ignore rules
+# ---------------------------------------------------------------------------
+
+# old research material (huge, not ours to publish)
+refs/
+_refs/
+__refs/
+
+# build output
+bin/
+obj/
+*.exe
+*.pdb
+*.dll
+*.pfx
+*.snk
+*.ilk
+*.cache
+*.log
+*.rsp
+
+# runtime state: accounts, cars, sessions, generated config, certs
+data/state/
+data/certs/*
+config.ini
+logs/
+launcher/launcher.ini
+*.tmp
+*.bak
+
+# the default self signed EA-Chat certificate ships with the repo
+!data/certs/xmpp.pfx
+!data/certs/xmpp.cer
+
+# keep the shipped web data, never ignore it
+!data/profiles/**/*.xml
+!data/profiles/**/*.json
+!data/profiles/**/*.html
+!data/profiles/**/*.png
+!data/profiles/**/*.jpg
+
+# editor / OS noise
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# local scratch
+tmp/
+scratch/
+*.7z
+*.zip

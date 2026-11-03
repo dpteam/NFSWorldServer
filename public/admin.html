@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DPT.Server - Admin</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%23953a3a'/><text x='32' y='42' font-family='Segoe UI,Arial' font-size='22' font-weight='bold' fill='white' text-anchor='middle'>ADM</text></svg>">
+<link rel="stylesheet" href="assets/css/theme.css">
+<link rel="stylesheet" href="assets/css/icons.css">
+</head>
+<body data-role="admin" data-theme-default="dark">
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <div class="logo" style="background:linear-gradient(145deg,#d98a8a,#7d2b2b);">ADM</div>
+      <div>
+        <div class="title">DPT.Server</div>
+        <div class="subtitle">Admin board</div>
+      </div>
+    </div>
+
+    <nav class="nav">
+      <button class="tab active" data-tab="dashboard"><i class="fa fa-house"></i> Overview</button>
+      <button class="tab" data-tab="players"><i class="fa fa-users"></i> Players</button>
+      <button class="tab" data-tab="accounts"><i class="fa fa-user"></i> Accounts</button>
+      <button class="tab" data-tab="relay"><i class="fa fa-signal"></i> Relay</button>
+      <button class="tab" data-tab="logs"><i class="fa fa-terminal"></i> Logs</button>
+      <button class="tab" data-tab="actions"><i class="fa fa-bolt"></i> Actions</button>
+      <button class="tab" data-tab="feed"><i class="fa fa-comment"></i> Events</button>
+      <button class="tab" data-tab="help"><i class="fa fa-question"></i> Help</button>
+    </nav>
+
+    <div class="toolbar">
+      <span class="dot" id="connDot" title="waiting for the server"></span>
+      <button class="iconbtn" id="btnRefresh" title="Refresh now"><i class="fa fa-rotate"></i></button>
+      <button class="iconbtn" id="btnSound" title="Sounds"><i class="fa fa-volume"></i></button>
+      <button class="iconbtn" id="btnTheme" title="Theme"><i class="fa fa-moon"></i></button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ------------------------------------------------------------- login card -->
+  <section class="card" id="adminLogin" style="max-width:460px;margin:40px auto">
+    <header><h2><i class="fa fa-shield"></i> Admin sign in</h2><span class="chip warn">LAN only</span></header>
+    <div class="body">
+      <p class="small muted" style="margin-top:0">
+        Paste the token from <code class="mono">config.ini</code> (<code>web.adminToken</code>).
+        It is kept in this browser tab only, sent as the <code>X-Admin-Token</code> header and
+        never stored on disk.
+      </p>
+      <label class="field"><span>Admin token</span>
+        <input id="adminToken" type="password" autocomplete="off" spellcheck="false" placeholder="paste token">
+      </label>
+      <div class="row">
+        <button class="primary" id="btnLogin"><i class="fa fa-check"></i> Sign in</button>
+      </div>
+    </div>
+  </section>
+
+  <div id="adminBar">
+    <!-- ------------------------------------------------------------ dashboard -->
+    <section class="panel active" data-panel="dashboard">
+      <div class="grid cols-3">
+        <div class="card"><div class="stat"><div class="ico"><i class="fa fa-users"></i></div><div><div class="value" id="sOnline">0</div><div class="label">drivers online</div></div></div></div>
+        <div class="card"><div class="stat"><div class="ico"><i class="fa fa-chart"></i></div><div><div class="value" id="sRequests">0</div><div class="label">http requests</div></div></div></div>
+        <div class="card"><div class="stat"><div class="ico"><i class="fa fa-signal"></i></div><div><div class="value" id="sRooms">0</div><div class="label">relay rooms</div></div></div></div>
+      </div>
+
+      <div class="grid cols-2" style="margin-top:14px">
+        <div class="card">
+          <header><h2><i class="fa fa-server"></i> Server</h2><span class="chip" id="sVersion">v?</span></header>
+          <div class="body">
+            <div class="pill-row" style="margin-bottom:10px">
+              <span class="chip" id="svcEngine">engine</span>
+              <span class="chip" id="svcXmpp">chat</span>
+              <span class="chip" id="svcRelay">relay</span>
+              <span class="chip" id="svcPublic">public</span>
+              <span class="chip" id="svcAdmin">admin</span>
+            </div>
+            <div class="kv">
+              <div class="k">Uptime</div><div class="v" id="sUptime">-</div>
+              <div class="k">Sessions</div><div class="v" id="sSessions">0</div>
+              <div class="k">Accounts</div><div class="v" id="sAccounts">0</div>
+              <div class="k">Personas</div><div class="v" id="sPersonas">0</div>
+              <div class="k">Cars owned</div><div class="v" id="sCars">0</div>
+              <div class="k">Relay in / out</div><div class="v"><span id="sRelayIn">0 B</span> / <span id="sRelayOut">0 B</span></div>
+              <div class="k">Relay packets</div><div class="v" id="sRelayPackets">0 / 0</div>
+              <div class="k">Relay dropped</div><div class="v" id="sRelayDropped">0</div>
+            </div>
+            <div class="sep"></div>
+            <div class="kv">
+              <div class="k">Working directory</div><div class="v mono" id="aPath">-</div>
+              <div class="k">Log directory</div><div class="v mono" id="aLogDir">-</div>
+              <div class="k">State directory</div><div class="v mono" id="aState">-</div>
+              <div class="k">Memory</div><div class="v" id="aMemory">-</div>
+              <div class="k">Engine</div><div class="v" id="aEngine">-</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <header><h2><i class="fa fa-car"></i> Client profiles</h2><span class="chip">multi-version</span></header>
+          <div class="body" id="profilesBox"><div class="empty">loading...</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- -------------------------------------------------------------- players -->
+    <section class="panel" data-panel="players">
+      <div class="card">
+        <header>
+          <h2><i class="fa fa-users"></i> Online drivers <span class="chip" id="playerCount">0</span></h2>
+          <div class="row" style="flex:0 0 260px"><input id="search" type="search" placeholder="search name, ip, id..."></div>
+        </header>
+        <div class="body tight">
+          <div class="empty" id="playersEmpty">nobody is driving right now</div>
+          <table class="list" id="playersTable" style="display:none">
+            <thead><tr>
+              <th>id</th><th>driver</th><th class="num">lvl</th><th class="num">rep</th><th class="num">cash</th>
+              <th>car</th><th class="num">online</th><th class="num">idle</th><th>ip</th><th>token</th><th class="num">req</th><th></th>
+            </tr></thead>
+            <tbody id="playersBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ------------------------------------------------------------- accounts -->
+    <section class="panel" data-panel="accounts">
+      <div class="card">
+        <header>
+          <h2><i class="fa fa-user"></i> Accounts <span class="chip" id="accountsCount">0</span></h2>
+          <div class="row">
+            <button class="small" id="btnReload"><i class="fa fa-rotate"></i> reload profiles</button>
+            <button class="small" id="btnSave"><i class="fa fa-download"></i> save state</button>
+            <button class="small" id="btnLogout">forget token</button>
+          </div>
+        </header>
+        <div class="body tight">
+          <table class="list">
+            <thead><tr><th>id</th><th>account</th><th>last login</th><th>personas</th><th></th></tr></thead>
+            <tbody id="accountsBody"><tr><td colspan="5" class="empty">open this tab with a valid token</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------------------------------------------------------------- relay -->
+    <section class="panel" data-panel="relay">
+      <div class="card">
+        <header><h2><i class="fa fa-signal"></i> NAT hairpin relay</h2><span class="chip" id="relaySummary">-</span></header>
+        <div class="body tight">
+          <div class="empty" id="relayEmpty">no relay rooms yet</div>
+          <table class="list" id="relayTable" style="display:none">
+            <thead><tr><th>room</th><th class="num">clients</th><th class="num">packets in / out</th><th class="num">bytes in / out</th><th>members (endpoint, persona, * = hairpin)</th></tr></thead>
+            <tbody id="relayBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ----------------------------------------------------------------- logs -->
+    <section class="panel" data-panel="logs">
+      <div class="card">
+        <header>
+          <h2><i class="fa fa-terminal"></i> Protocol log</h2>
+          <div class="row">
+            <select id="logsLevel" style="width:110px">
+              <option value="">all</option>
+              <option value="Info">info+</option>
+              <option value="Debug">debug+</option>
+              <option value="Verbose">verbose</option>
+              <option value="Warn">warn+</option>
+              <option value="Error">errors</option>
+            </select>
+            <button class="small" id="btnLogsPause">pause</button>
+            <button class="small" id="btnLogsClear">clear</button>
+          </div>
+        </header>
+        <div class="logview" id="logsView"></div>
+      </div>
+    </section>
+
+    <!-- -------------------------------------------------------------- actions -->
+    <section class="panel" data-panel="actions">
+      <div class="grid cols-2">
+        <div class="card">
+          <header><h2><i class="fa fa-comment"></i> Announce to everyone</h2></header>
+          <div class="body">
+            <p class="small muted" style="margin-top:0">Delivered to every connected EA-Chat client (in-game lobby).</p>
+            <textarea id="announceText" rows="4" maxlength="400" placeholder="Server restart in 10 minutes, finish your race!"></textarea>
+            <div class="row" style="margin-top:8px"><button class="primary" id="btnAnnounce"><i class="fa fa-comment"></i> Send</button></div>
+          </div>
+        </div>
+        <div class="card">
+          <header><h2><i class="fa fa-power"></i> Server control</h2></header>
+          <div class="body">
+            <p class="small muted" style="margin-top:0">
+              Shutdown asks the process to stop gracefully: pending purchases are saved,
+              sessions expire and the log is flushed first.
+            </p>
+            <button class="danger" id="btnShutdown"><i class="fa fa-power"></i> Stop server</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ----------------------------------------------------------------- feed -->
+    <section class="panel" data-panel="feed">
+      <div class="card">
+        <header><h2><i class="fa fa-comment"></i> Live events</h2><span class="chip">server feed</span></header>
+        <ul class="feed" id="feedList">
+          <li><span class="t">--:--</span><span class="muted">waiting for events...</span><span></span></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ----------------------------------------------------------------- help -->
+    <section class="panel" data-panel="help">
+      <div class="grid cols-2">
+        <div class="card">
+          <header><h2><i class="fa fa-shield"></i> Security model</h2></header>
+          <div class="body small">
+            <ul style="margin:0;padding-left:18px;line-height:1.8">
+              <li>The admin board refuses non-private IPs (<code>web.adminPrivateOnly</code>).</li>
+              <li>Every admin API call needs the token; failures are throttled and banned per IP.</li>
+              <li>The public board API never returns IPs, tokens, machine ids or logs.</li>
+              <li>Publish only the public port through NGinx Proxy Manager, over HTTPS.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="card">
+          <header><h2><i class="fa fa-terminal"></i> Console commands</h2></header>
+          <div class="body">
+            <pre class="code">status            services, counts, traffic
+players           online personas
+kick &lt;id&gt; [why]   kick a persona (session + chat)
+say &lt;text&gt;        announcement to every client
+reload            re-read data/profiles
+save              flush accounts/personas
+links             show board URLs
+quit              stop the server</pre>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+</main>
+
+<div class="toasts" id="toasts"></div>
+
+<script src="assets/js/sound.js"></script>
+<script src="assets/js/ui.js"></script>
+<script src="assets/js/app.js"></script>
+</body>
+</html>

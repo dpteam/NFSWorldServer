@@ -1,0 +1,18 @@
+<ProfileData xmlns="http://schemas.datacontract.org/2004/07/EA.NFSWO.ENGINE.TransferObjects.DriverPersona" xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+<bio i:nil="true"/>
+<boost>0.0</boost>
+<cash>35000.00000</cash>
+<clan>1</clan>
+<clanIcon>clanIcon</clanIcon>
+<iconIndex>16</iconIndex>
+<level>1</level>
+<name>GMTP</name>
+<nickname>GMTP</nickname>
+<percentToLevel>0</percentToLevel>
+<personaId>100</personaId>
+<raceTickets>100</raceTickets>
+<rating>1000</rating>
+<rep>0</rep>
+<repAtCurrentLevel>0</repAtCurrentLevel>
+<statusMessage/>
+</ProfileData>

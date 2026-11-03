@@ -1,0 +1,16 @@
+<PersonaFriendsList xmlns="http://schemas.datacontract.org/2004/07/EA.NFSWO.ENGINE.TransferObjects.DriverPersona"
+                    xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+    <friendPersona>
+        <FriendPersona>
+            <driverIcon>15</driverIcon>
+            <level>10</level>
+            <name>SPEEDY</name>
+            <originalName>Speedy</originalName>
+            <personaId>200</personaId>
+            <presence>3</presence>
+            <socialNetwork>0</socialNetwork>
+            <userId>1000000</userId>
+        </FriendPersona>
+    </friendPersona>
+    <personaId>100</personaId>
+</PersonaFriendsList>

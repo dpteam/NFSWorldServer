@@ -1,0 +1,14 @@
+﻿<ProfileData>
+	<Boost>0</Boost>
+	<Cash>{{Cash}}</Cash>
+	<IconIndex>{{IconIndex}}</IconIndex>
+	<Level>{{Level}}</Level>
+	<Motto>{{Motto}}</Motto>
+	<Name>{{Name}}</Name>
+	<PercentToLevel>{{PercentToLevel}}</PercentToLevel>
+	<PersonaId>{{PersonaId}}</PersonaId>
+	<Rating>{{Rating}}</Rating>
+	<Rep>{{Rep}}</Rep>
+	<RepAtCurrentLevel>0</RepAtCurrentLevel>
+	<Score>{{Score}}</Score>
+</ProfileData>

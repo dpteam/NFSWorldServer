@@ -1,0 +1,48 @@
+<psd filename="zone_placement.psd" path="/z/Shift/Speed/World/Global/Art/Maps/" width="2048" height="2048">
+	<layers name="Layer 1" stack="0" position="0, 0" layerwidth="2048" layerheight="2047" transformpoint="center">Layer 1.png</layers>
+	<layers name="zone_lg_place_1" stack="1" position="311, 700" layerwidth="512" layerheight="512" transformpoint="center">zone_lg_place_1.png</layers>
+	<layers name="zone_lg_place_2" stack="2" position="391, 602" layerwidth="512" layerheight="512" transformpoint="center">zone_lg_place_2.png</layers>
+	<layers name="zone_lg_place_3" stack="3" position="466, 715" layerwidth="512" layerheight="512" transformpoint="center">zone_lg_place_3.png</layers>
+	<layers name="zone_lg_place_4" stack="4" position="521, 552" layerwidth="512" layerheight="512" transformpoint="center">zone_lg_place_4.png</layers>
+	<layers name="zone_lg_place_5" stack="5" position="648, 608" layerwidth="512" layerheight="512" transformpoint="center">zone_lg_place_5.png</layers>
+	<layers name="zone_lg_place_6" stack="6" position="503, 297" layerwidth="512" layerheight="512" transformpoint="center">zone_lg_place_6.png</layers>
+	<layers name="zone_lg_place_7" stack="7" position="500, 432" layerwidth="512" layerheight="512" transformpoint="center">zone_lg_place_7.png</layers>
+	<layers name="zone_lg_place_8" stack="8" position="617, 368" layerwidth="512" layerheight="512" transformpoint="center">zone_lg_place_8.png</layers>
+	<layers name="zone_lg_place_9" stack="9" position="722, 357" layerwidth="512" layerheight="512" transformpoint="center">zone_lg_place_9.png</layers>
+	<layers name="zone_lg_place_10" stack="10" position="815, 345" layerwidth="512" layerheight="512" transformpoint="center">zone_lg_place_10.png</layers>
+	<layers name="zone_lg_place_11" stack="11" position="-82, 176" layerwidth="512" layerheight="512" transformpoint="center">zone_lg_place_11.png</layers>
+	<layers name="zone_lg_place_12" stack="12" position="-63, 401" layerwidth="512" layerheight="512" transformpoint="center">zone_lg_place_12.png</layers>
+	<layers name="zone_lg_place_13" stack="13" position="132, 262" layerwidth="512" layerheight="512" transformpoint="center">zone_lg_place_13.png</layers>
+	<layers name="zone_lg_place_14" stack="14" position="95, 438" layerwidth="512" layerheight="512" transformpoint="center">zone_lg_place_14.png</layers>
+	<layers name="zone_lg_place_15" stack="15" position="239, 357" layerwidth="512" layerheight="512" transformpoint="center">zone_lg_place_15.png</layers>
+	<layers name="zone_lg_place_16" stack="16" position="401, -58" layerwidth="512" layerheight="512" transformpoint="center">zone_lg_place_16.png</layers>
+	<layers name="zone_lg_place_17" stack="17" position="555, -99" layerwidth="512" layerheight="512" transformpoint="center">zone_lg_place_17.png</layers>
+	<layers name="zone_lg_place_18" stack="18" position="561, 45" layerwidth="512" layerheight="512" transformpoint="center">zone_lg_place_18.png</layers>
+	<layers name="zone_lg_place_19" stack="19" position="551, 148" layerwidth="512" layerheight="512" transformpoint="center">zone_lg_place_19.png</layers>
+	<layers name="zone_lg_place_20" stack="20" position="651, -112" layerwidth="512" layerheight="512" transformpoint="center">zone_lg_place_20.png</layers>
+	<layers name="zone_lg_place_21" stack="21" position="696, 42" layerwidth="512" layerheight="512" transformpoint="center">zone_lg_place_21.png</layers>
+	<layers name="zone_lg_place_22" stack="22" position="701, -121" layerwidth="512" layerheight="512" transformpoint="center">zone_lg_place_22.png</layers>
+	<layers name="zone_lg_place_23" stack="23" position="1467, 76" layerwidth="512" layerheight="512" transformpoint="center">zone_lg_place_23.png</layers>
+	<layers name="zone_lg_place_24" stack="24" position="1374, 349" layerwidth="512" layerheight="512" transformpoint="center">zone_lg_place_24.png</layers>
+	<layers name="zone_lg_place_25" stack="25" position="1573, 296" layerwidth="512" layerheight="512" transformpoint="center">zone_lg_place_25.png</layers>
+	<layers name="zone_lg_place_26" stack="26" position="1449, 575" layerwidth="512" layerheight="512" transformpoint="center">zone_lg_place_26.png</layers>
+	<layers name="zone_lg_place_27" stack="27" position="1619, 510" layerwidth="512" layerheight="512" transformpoint="center">zone_lg_place_27.png</layers>
+	<layers name="zone_lg_place_28" stack="28" position="903, 593" layerwidth="512" layerheight="512" transformpoint="center">zone_lg_place_28.png</layers>
+	<layers name="zone_lg_place_29" stack="29" position="1089, 505" layerwidth="512" layerheight="512" transformpoint="center">zone_lg_place_29.png</layers>
+	<layers name="zone_lg_place_30" stack="30" position="1065, 647" layerwidth="512" layerheight="512" transformpoint="center">zone_lg_place_30.png</layers>
+	<layers name="zone_lg_place_31" stack="31" position="1267, 566" layerwidth="512" layerheight="512" transformpoint="center">zone_lg_place_31.png</layers>
+	<layers name="zone_lg_place_32" stack="32" position="840, 499" layerwidth="1024" layerheight="1024" transformpoint="center">zone_lg_place_32.png</layers>
+	<layers name="zone_lg_place_33" stack="33" position="952, -148" layerwidth="512" layerheight="512" transformpoint="center">zone_lg_place_33.png</layers>
+	<layers name="zone_lg_place_34" stack="34" position="822, 47" layerwidth="512" layerheight="512" transformpoint="center">zone_lg_place_34.png</layers>
+	<layers name="zone_lg_place_35" stack="35" position="1047, 36" layerwidth="512" layerheight="512" transformpoint="center">zone_lg_place_35.png</layers>
+	<layers name="zone_lg_place_36" stack="36" position="1251, -50" layerwidth="512" layerheight="512" transformpoint="center">zone_lg_place_36.png</layers>
+	<layers name="zone_lg_place_37" stack="37" position="919, 241" layerwidth="512" layerheight="512" transformpoint="center">zone_lg_place_37.png</layers>
+	<layers name="zone_lg_place_38" stack="38" position="1190, 264" layerwidth="512" layerheight="512" transformpoint="center">zone_lg_place_38.png</layers>
+	<layers name="Layer Color" stack="39" position="22, 22" layerwidth="605" layerheight="60" transformpoint="center">Layer Color.png</layers>
+<colors>
+<color>FFF30C</color>
+<color>FFC325</color>
+<color>FF871C</color>
+<color>DB1301</color>
+</colors>
+</psd>

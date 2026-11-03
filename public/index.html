@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DPT.Server - NFS World</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%232f5c95'/><text x='32' y='42' font-family='Segoe UI,Arial' font-size='24' font-weight='bold' fill='white' text-anchor='middle'>DPT</text></svg>">
+<link rel="stylesheet" href="assets/css/theme.css">
+<link rel="stylesheet" href="assets/css/icons.css">
+</head>
+<body data-role="public" data-theme-default="light">
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <div class="logo">DPT</div>
+      <div>
+        <div class="title">DPT.Server</div>
+        <div class="subtitle">Need For Speed World</div>
+      </div>
+    </div>
+
+    <nav class="nav">
+      <button class="tab active" data-tab="dashboard"><i class="fa fa-house"></i> Overview</button>
+      <button class="tab" data-tab="players"><i class="fa fa-users"></i> Players</button>
+      <button class="tab" data-tab="relay"><i class="fa fa-signal"></i> Relay</button>
+      <button class="tab" data-tab="feed"><i class="fa fa-comment"></i> Events</button>
+      <button class="tab" data-tab="help"><i class="fa fa-question"></i> Help</button>
+    </nav>
+
+    <div class="toolbar">
+      <span class="dot" id="connDot" title="waiting for the server"></span>
+      <button class="iconbtn" id="btnRefresh" title="Refresh now"><i class="fa fa-rotate"></i></button>
+      <button class="iconbtn" id="btnSound" title="Sounds"><i class="fa fa-volume"></i></button>
+      <button class="iconbtn" id="btnTheme" title="Theme"><i class="fa fa-moon"></i></button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ------------------------------------------------------------- dashboard -->
+  <section class="panel active" data-panel="dashboard">
+    <div class="grid cols-3">
+      <div class="card">
+        <div class="stat">
+          <div class="ico"><i class="fa fa-users"></i></div>
+          <div>
+            <div class="value" id="sOnline">0</div>
+            <div class="label">drivers online</div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="stat">
+          <div class="ico"><i class="fa fa-user"></i></div>
+          <div>
+            <div class="value" id="sPersonas">0</div>
+            <div class="label">personas</div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="stat">
+          <div class="ico"><i class="fa fa-signal"></i></div>
+          <div>
+            <div class="value" id="sRooms">0</div>
+            <div class="label">relay rooms</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid cols-2" style="margin-top:14px">
+      <div class="card">
+        <header><h2><i class="fa fa-server"></i> Server</h2><span class="chip" id="sVersion">v?</span></header>
+        <div class="body">
+          <div class="pill-row" style="margin-bottom:10px">
+            <span class="chip" id="svcEngine">engine</span>
+            <span class="chip" id="svcXmpp">chat</span>
+            <span class="chip" id="svcRelay">relay</span>
+            <span class="chip" id="svcPublic">public</span>
+            <span class="chip" id="svcAdmin">admin</span>
+          </div>
+          <div class="kv">
+            <div class="k">Uptime</div><div class="v" id="sUptime">-</div>
+            <div class="k">Sessions</div><div class="v" id="sSessions">0</div>
+            <div class="k">Accounts</div><div class="v" id="sAccounts">0</div>
+            <div class="k">Cars owned</div><div class="v" id="sCars">0</div>
+            <div class="k">HTTP requests</div><div class="v" id="sRequests">0</div>
+            <div class="k">Relay traffic in</div><div class="v" id="sRelayIn">0 B</div>
+            <div class="k">Relay traffic out</div><div class="v" id="sRelayOut">0 B</div>
+            <div class="k">Relay packets in / out</div><div class="v" id="sRelayPackets">0 / 0</div>
+            <div class="k">Relay dropped</div><div class="v" id="sRelayDropped">0</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <header><h2><i class="fa fa-car"></i> Client profiles</h2><span class="chip">multi-version</span></header>
+        <div class="body" id="profilesBox">
+          <div class="empty">loading...</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- --------------------------------------------------------------- players -->
+  <section class="panel" data-panel="players">
+    <div class="card">
+      <header>
+        <h2><i class="fa fa-users"></i> Online drivers <span class="chip" id="playerCount">0</span></h2>
+        <div class="row" style="flex:0 0 260px">
+          <input id="search" type="search" placeholder="search name, car, id...">
+        </div>
+      </header>
+      <div class="body tight">
+        <div class="empty" id="playersEmpty">nobody is driving right now</div>
+        <table class="list" id="playersTable" style="display:none">
+          <thead>
+            <tr>
+              <th>id</th><th>driver</th><th class="num">lvl</th><th class="num">rep</th>
+              <th class="num">cash</th><th>car</th><th class="num">online</th><th class="num">idle</th>
+            </tr>
+          </thead>
+          <tbody id="playersBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ----------------------------------------------------------------- relay -->
+  <section class="panel" data-panel="relay">
+    <div class="card">
+      <header>
+        <h2><i class="fa fa-signal"></i> NAT hairpin relay</h2>
+        <span class="chip" id="relaySummary">-</span>
+      </header>
+      <div class="body">
+        <p class="small muted" style="margin-top:0">
+          Players behind the same router (or CGNAT) cannot reach each other directly. Their game
+          traffic is forwarded through this UDP relay instead. Rooms group players that should see
+          each other.
+        </p>
+        <div class="empty" id="relayEmpty">no relay rooms yet</div>
+        <table class="list" id="relayTable" style="display:none">
+          <thead><tr><th>room</th><th class="num">clients</th><th class="num">packets in / out</th><th class="num">bytes in / out</th><th>members</th></tr></thead>
+          <tbody id="relayBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ------------------------------------------------------------------ feed -->
+  <section class="panel" data-panel="feed">
+    <div class="card">
+      <header><h2><i class="fa fa-comment"></i> Live events</h2><span class="chip">server feed</span></header>
+      <ul class="feed" id="feedList">
+        <li><span class="t">--:--</span><span class="muted">waiting for events...</span><span></span></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ------------------------------------------------------------------ help -->
+  <section class="panel" data-panel="help">
+    <div class="grid cols-2">
+      <div class="card">
+        <header><h2><i class="fa fa-play"></i> How to connect</h2></header>
+        <div class="body">
+          <ol class="small" style="margin:0;padding-left:18px;line-height:1.8">
+            <li>Start the server (<code>run.cmd</code>) or use the launcher.</li>
+            <li>Open <b>NFSWorldLauncher.exe</b>, check the server URL, press <b>Play</b>.</li>
+            <li>Manual launch: <code class="mono">nfsw.exe US http://your-host:44600/Engine.svc a 1</code></li>
+            <li>Create a driver name in-game; it becomes your persona.</li>
+            <li>Invite friends: they only need this page URL and the launcher.</li>
+          </ol>
+        </div>
+      </div>
+      <div class="card">
+        <header><h2><i class="fa fa-shield"></i> Ports</h2></header>
+        <div class="body">
+          <div class="kv">
+            <div class="k">Engine (game)</div><div class="v mono">TCP 44600</div>
+            <div class="k">Public board</div><div class="v mono">TCP 44601</div>
+            <div class="k">Admin board</div><div class="v mono">TCP 44602 (LAN)</div>
+            <div class="k">EA-Chat</div><div class="v mono">TCP 44603</div>
+            <div class="k">UDP relay</div><div class="v mono">UDP 44610</div>
+          </div>
+          <div class="sep"></div>
+          <p class="small muted">
+            Publish the public board through NGinx Proxy Manager. The game port can be published on
+            the same domain (<code>/Engine.svc</code> path) or on its own subdomain. Keep the admin
+            port inside the LAN.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<div class="toasts" id="toasts"></div>
+
+<script src="assets/js/sound.js"></script>
+<script src="assets/js/ui.js"></script>
+<script src="assets/js/app.js"></script>
+</body>
+</html>

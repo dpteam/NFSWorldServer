@@ -1,0 +1,1 @@
+<TreasureHuntEventSession xmlns="http://schemas.datacontract.org/2004/07/Victory.DataLayer.Serialization.Event" xmlns:i="http://www.w3.org/2001/XMLSchema-instance"><CoinsCollected>1832</CoinsCollected><IsStreakBroken>false</IsStreakBroken><NumCoins>15</NumCoins><Seed>-599549535</Seed><Streak>101</Streak></TreasureHuntEventSession>

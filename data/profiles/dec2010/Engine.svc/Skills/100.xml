@@ -1,0 +1,12 @@
+<ReplySkillAll xmlns="http://schemas.datacontract.org/2004/07/EA.NFSWO.ENGINE.DataLayer.Serialization" xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+<availableSkills>
+<skillId xmlns:a="http://schemas.microsoft.com/2003/10/Serialization/Arrays"/></availableSkills>
+<learnedSkills/>
+<stats>
+<driver_level>1</driver_level>
+<skillpoints>0</skillpoints>
+<skillpoints_explore>0</skillpoints_explore>
+<skillpoints_pursuit>0</skillpoints_pursuit>
+<skillpoints_race>0</skillpoints_race>
+</stats>
+</ReplySkillAll>

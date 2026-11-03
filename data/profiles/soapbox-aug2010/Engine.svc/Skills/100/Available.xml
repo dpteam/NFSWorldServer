@@ -1,0 +1,1 @@
+<ReplySkillAvailable xmlns="http://schemas.datacontract.org/2004/07/EA.NFSWO.ENGINE.DataLayer.Serialization" xmlns:i="http://www.w3.org/2001/XMLSchema-instance"><skillId xmlns:a="http://schemas.microsoft.com/2003/10/Serialization/Arrays"><a:int>10</a:int><a:int>16</a:int><a:int>20</a:int></skillId></ReplySkillAvailable>

@@ -1,0 +1,203 @@
+<ArrayOfProductTrans xmlns="http://schemas.datacontract.org/2004/07/EA.NFSWO.ENGINE.DataLayer.Serialization"
+                     xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+    <ProductTrans>
+        <BundleItems i:nil="true"/>
+        <CategoryId i:nil="true"/>
+        <Currency>_NS</Currency>
+        <Description>GM_CATALOG_000001AF,15</Description>
+        <DurationMinute>0</DurationMinute>
+        <Hash>-1692359144</Hash>
+        <Icon>prod_powerup_stack_coold</Icon>
+        <Level>0</Level>
+        <LongDescription>GM_CATALOG_000001B0,15</LongDescription>
+        <Price>100.0000</Price>
+        <Priority>38</Priority>
+        <ProductId>NFSW-NA:6E932276</ProductId>
+        <ProductTitle>GM_CATALOG_00000583,15</ProductTitle>
+        <ProductType>POWERUP</ProductType>
+        <UseCount>15</UseCount>
+        <VisualStyle>0</VisualStyle>
+        <WebIcon/>
+        <WebLocation/>
+    </ProductTrans>
+    <ProductTrans>
+        <BundleItems i:nil="true"/>
+        <CategoryId i:nil="true"/>
+        <Currency>_NS</Currency>
+        <Description>GM_CATALOG_000001E7,15</Description>
+        <DurationMinute>0</DurationMinute>
+        <Hash>957701799</Hash>
+        <Icon>prod_powerup_stack_ready</Icon>
+        <Level>0</Level>
+        <LongDescription>GM_CATALOG_000001E8,15</LongDescription>
+        <Price>100.0000</Price>
+        <Priority>33</Priority>
+        <ProductId>NFSW-NA:712F08C6</ProductId>
+        <ProductTitle>GM_CATALOG_00000584,15</ProductTitle>
+        <ProductType>POWERUP</ProductType>
+        <UseCount>15</UseCount>
+        <VisualStyle>0</VisualStyle>
+        <WebIcon/>
+        <WebLocation/>
+    </ProductTrans>
+    <ProductTrans>
+        <BundleItems i:nil="true"/>
+        <CategoryId i:nil="true"/>
+        <Currency>_NS</Currency>
+        <Description>GM_CATALOG_000000C8,15</Description>
+        <DurationMinute>0</DurationMinute>
+        <Hash>1805681994</Hash>
+        <Icon>prod_powerup_stack_jugge</Icon>
+        <Level>0</Level>
+        <LongDescription>GM_CATALOG_000000C9,15</LongDescription>
+        <Price>100.0000</Price>
+        <Priority>34</Priority>
+        <ProductId>NFSW-NA:7B7B0E4E</ProductId>
+        <ProductTitle>GM_CATALOG_00000585,15</ProductTitle>
+        <ProductType>POWERUP</ProductType>
+        <UseCount>15</UseCount>
+        <VisualStyle>0</VisualStyle>
+        <WebIcon/>
+        <WebLocation/>
+    </ProductTrans>
+    <ProductTrans>
+        <BundleItems i:nil="true"/>
+        <CategoryId i:nil="true"/>
+        <Currency>_NS</Currency>
+        <Description>GM_CATALOG_00000222,15</Description>
+        <DurationMinute>0</DurationMinute>
+        <Hash>-364944936</Hash>
+        <Icon>prod_powerup_stack_shiel</Icon>
+        <Level>0</Level>
+        <LongDescription>GM_CATALOG_00000223,15</LongDescription>
+        <Price>100.0000</Price>
+        <Priority>40</Priority>
+        <ProductId>NFSW-NA:940C21CC</ProductId>
+        <ProductTitle>GM_CATALOG_00000586,15</ProductTitle>
+        <ProductType>POWERUP</ProductType>
+        <UseCount>15</UseCount>
+        <VisualStyle>0</VisualStyle>
+        <WebIcon/>
+        <WebLocation/>
+    </ProductTrans>
+    <ProductTrans>
+        <BundleItems i:nil="true"/>
+        <CategoryId i:nil="true"/>
+        <Currency>_NS</Currency>
+        <Description>GM_CATALOG_00000244,15</Description>
+        <DurationMinute>0</DurationMinute>
+        <Hash>2236629</Hash>
+        <Icon>prod_powerup_stack_sling</Icon>
+        <Level>0</Level>
+        <LongDescription>GM_CATALOG_00000245,15</LongDescription>
+        <Price>100.0000</Price>
+        <Priority>36</Priority>
+        <ProductId>NFSW-NA:9C30412F</ProductId>
+        <ProductTitle>GM_CATALOG_00000587,15</ProductTitle>
+        <ProductType>POWERUP</ProductType>
+        <UseCount>15</UseCount>
+        <VisualStyle>0</VisualStyle>
+        <WebIcon/>
+        <WebLocation/>
+    </ProductTrans>
+    <ProductTrans>
+        <BundleItems i:nil="true"/>
+        <CategoryId i:nil="true"/>
+        <Currency>_NS</Currency>
+        <Description>GM_CATALOG_000001BE,15</Description>
+        <DurationMinute>0</DurationMinute>
+        <Hash>-537557654</Hash>
+        <Icon>prod_powerup_stack_runfl</Icon>
+        <Level>0</Level>
+        <LongDescription>GM_CATALOG_000001BF,15</LongDescription>
+        <Price>100.0000</Price>
+        <Priority>39</Priority>
+        <ProductId>NFSW-NA:9D071A38</ProductId>
+        <ProductTitle>GM_CATALOG_00000588,15</ProductTitle>
+        <ProductType>POWERUP</ProductType>
+        <UseCount>15</UseCount>
+        <VisualStyle>0</VisualStyle>
+        <WebIcon/>
+        <WebLocation/>
+    </ProductTrans>
+    <ProductTrans>
+        <BundleItems i:nil="true"/>
+        <CategoryId i:nil="true"/>
+        <Currency>_NS</Currency>
+        <Description>GM_CATALOG_00000442,15</Description>
+        <DurationMinute>0</DurationMinute>
+        <Hash>1627606782</Hash>
+        <Icon>prod_powerup_stack_onemo</Icon>
+        <Level>0</Level>
+        <LongDescription>GM_CATALOG_00000265,15</LongDescription>
+        <Price>100.0000</Price>
+        <Priority>35</Priority>
+        <ProductId>NFSW-NA:CB469C9F</ProductId>
+        <ProductTitle>GM_CATALOG_00000589,15</ProductTitle>
+        <ProductType>POWERUP</ProductType>
+        <UseCount>15</UseCount>
+        <VisualStyle>0</VisualStyle>
+        <WebIcon/>
+        <WebLocation/>
+    </ProductTrans>
+    <ProductTrans>
+        <BundleItems i:nil="true"/>
+        <CategoryId i:nil="true"/>
+        <Currency>_NS</Currency>
+        <Description>GM_CATALOG_0000016C,15</Description>
+        <DurationMinute>0</DurationMinute>
+        <Hash>-1681514783</Hash>
+        <Icon>prod_powerup_stack_nos__</Icon>
+        <Level>0</Level>
+        <LongDescription>GM_CATALOG_0000016D,15</LongDescription>
+        <Price>100.0000</Price>
+        <Priority>31</Priority>
+        <ProductId>NFSW-NA:D4AB799C</ProductId>
+        <ProductTitle>GM_CATALOG_0000044F,15</ProductTitle>
+        <ProductType>POWERUP</ProductType>
+        <UseCount>15</UseCount>
+        <VisualStyle>0</VisualStyle>
+        <WebIcon/>
+        <WebLocation/>
+    </ProductTrans>
+    <ProductTrans>
+        <BundleItems i:nil="true"/>
+        <CategoryId i:nil="true"/>
+        <Currency>_NS</Currency>
+        <Description>GM_CATALOG_00000143,15</Description>
+        <DurationMinute>0</DurationMinute>
+        <Hash>125509666</Hash>
+        <Icon>prod_powerup_stack_magne</Icon>
+        <Level>0</Level>
+        <LongDescription>GM_CATALOG_00000144,15</LongDescription>
+        <Price>100.0000</Price>
+        <Priority>32</Priority>
+        <ProductId>NFSW-NA:D4F07C89</ProductId>
+        <ProductTitle>GM_CATALOG_0000058A,15</ProductTitle>
+        <ProductType>POWERUP</ProductType>
+        <UseCount>15</UseCount>
+        <VisualStyle>0</VisualStyle>
+        <WebIcon/>
+        <WebLocation/>
+    </ProductTrans>
+    <ProductTrans>
+        <BundleItems i:nil="true"/>
+        <CategoryId i:nil="true"/>
+        <Currency>_NS</Currency>
+        <Description>GM_CATALOG_00000176,15</Description>
+        <DurationMinute>0</DurationMinute>
+        <Hash>-611661916</Hash>
+        <Icon>prod_powerup_stack_evade</Icon>
+        <Level>0</Level>
+        <LongDescription>GM_CATALOG_00000177,15</LongDescription>
+        <Price>100.0000</Price>
+        <Priority>37</Priority>
+        <ProductId>NFSW-NA:E5BDB793</ProductId>
+        <ProductTitle>GM_CATALOG_0000058B,15</ProductTitle>
+        <ProductType>POWERUP</ProductType>
+        <UseCount>15</UseCount>
+        <VisualStyle>0</VisualStyle>
+        <WebIcon/>
+        <WebLocation/>
+    </ProductTrans>
+</ArrayOfProductTrans>

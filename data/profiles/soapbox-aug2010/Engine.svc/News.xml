@@ -1,0 +1,1 @@
+<ArrayOfNewsItem xmlns="http://schemas.datacontract.org/2004/07/EA.NFSWO.ENGINE.TransferObjects.News" xmlns:i="http://www.w3.org/2001/XMLSchema-instance"><NewsItem><newsId>325899</newsId><parameters>&lt;NewsItem_WelcomeMessage /&gt;</parameters><personaId>80885</personaId><timestamp>634159399200000000</timestamp><type>8</type></NewsItem></ArrayOfNewsItem>

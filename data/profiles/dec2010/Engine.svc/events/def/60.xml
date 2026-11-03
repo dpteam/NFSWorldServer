@@ -1,0 +1,35 @@
+<EventDefinition
+        xmlns="http://schemas.datacontract.org/2004/07/EA.NFSWO.ENGINE.DataLayer.Serialization.Event"
+        xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+    <EngagePoint
+            xmlns:a="http://schemas.datacontract.org/2004/07/EA.NFSWO.ENGINE.DataLayer.Serialization">
+        <a:X>6071.16</a:X>
+        <a:Y>2607.001</a:Y>
+        <a:Z>188.3913</a:Z>
+    </EngagePoint>
+    <EventId>60</EventId>
+    <EventIdString>mp.1.0</EventIdString>
+    <EventLocalization>953953221</EventLocalization>
+    <EventModeDescriptionLocalization>-86595550</EventModeDescriptionLocalization>
+    <EventModeIcon>GameModeIcon_MeetingPlace</EventModeIcon>
+    <EventModeId>22</EventModeId>
+    <EventModeLocalization>-552266715</EventModeLocalization>
+    <IsEnabled>true</IsEnabled>
+    <Laps>0</Laps>
+    <Length>99</Length>
+    <MaxEntrants>6</MaxEntrants>
+    <MaxLevel>50</MaxLevel>
+    <MaxTier>4</MaxTier>
+    <MinEntrants>2</MinEntrants>
+    <MinLevel>2</MinLevel>
+    <MinTier>1</MinTier>
+    <RegionLocalization>0</RegionLocalization>
+    <RewardModes
+            xmlns:a="http://schemas.microsoft.com/2003/10/Serialization/Arrays">
+        <a:int>1</a:int>
+        <a:int>2</a:int>
+        <a:int>3</a:int>
+    </RewardModes>
+    <TrackLayoutMap>mp.1.0</TrackLayoutMap>
+    <TrackLocalization>-350137846</TrackLocalization>
+</EventDefinition>

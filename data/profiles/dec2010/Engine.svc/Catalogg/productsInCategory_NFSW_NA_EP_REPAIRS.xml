@@ -1,0 +1,63 @@
+<ArrayOfProductTrans xmlns="http://schemas.datacontract.org/2004/07/EA.NFSWO.ENGINE.DataLayer.Serialization"
+                     xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+    <ProductTrans>
+        <BundleItems i:nil="true"/>
+        <CategoryId i:nil="true"/>
+        <Currency>CASH</Currency>
+        <Description>GM_CATALOG_000002D6,1</Description>
+        <DurationMinute>0</DurationMinute>
+        <Hash>-1016061444</Hash>
+        <Icon/>
+        <Level>0</Level>
+        <LongDescription>GM_CATALOG_000002D6,1</LongDescription>
+        <Price>10.0000</Price>
+        <Priority>0</Priority>
+        <ProductId>NFSW-NA:55210085</ProductId>
+        <ProductTitle>GM_CATALOG_000002D5,1</ProductTitle>
+        <ProductType>REPAIR</ProductType>
+        <UseCount>1</UseCount>
+        <VisualStyle>0</VisualStyle>
+        <WebIcon/>
+        <WebLocation/>
+    </ProductTrans>
+    <ProductTrans>
+        <BundleItems i:nil="true"/>
+        <CategoryId i:nil="true"/>
+        <Currency>CASH</Currency>
+        <Description>GM_CATALOG_000002D6,1</Description>
+        <DurationMinute>0</DurationMinute>
+        <Hash>-1910319953</Hash>
+        <Icon/>
+        <Level>0</Level>
+        <LongDescription>GM_CATALOG_000002D6,1</LongDescription>
+        <Price>30.0000</Price>
+        <Priority>0</Priority>
+        <ProductId>NFSW-NA:55210086</ProductId>
+        <ProductTitle>GM_CATALOG_000002D5,1</ProductTitle>
+        <ProductType>REPAIR</ProductType>
+        <UseCount>1</UseCount>
+        <VisualStyle>0</VisualStyle>
+        <WebIcon/>
+        <WebLocation/>
+    </ProductTrans>
+    <ProductTrans>
+        <BundleItems i:nil="true"/>
+        <CategoryId i:nil="true"/>
+        <Currency>CASH</Currency>
+        <Description>GM_CATALOG_000002D6,1</Description>
+        <DurationMinute>0</DurationMinute>
+        <Hash>-1480226092</Hash>
+        <Icon/>
+        <Level>0</Level>
+        <LongDescription>GM_CATALOG_000002D6,1</LongDescription>
+        <Price>50.0000</Price>
+        <Priority>0</Priority>
+        <ProductId>NFSW-NA:55210087</ProductId>
+        <ProductTitle>GM_CATALOG_000002D5,1</ProductTitle>
+        <ProductType>REPAIR</ProductType>
+        <UseCount>1</UseCount>
+        <VisualStyle>0</VisualStyle>
+        <WebIcon/>
+        <WebLocation/>
+    </ProductTrans>
+</ArrayOfProductTrans>

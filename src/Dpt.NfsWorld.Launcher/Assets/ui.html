@@ -1,0 +1,131 @@
+<!doctype html>
+<html>
+<head>
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta charset="utf-8">
+<title>DPT.Server Launcher</title>
+<!--THEME-->
+</head>
+<body class="dark">
+
+<div class="shell">
+
+  <div class="hero">
+    <div class="logo">DPT</div>
+    <div class="hero-text">
+      <div class="hero-title">DPT.Server</div>
+      <div class="hero-sub">Need For Speed World</div>
+    </div>
+    <div class="hero-right">
+      <span class="pill" id="statusPill"><span class="dot" id="statusDot"></span> <span id="statusText">checking...</span></span>
+      <span class="pill dim" id="versionPill">v{{VERSION}}</span>
+    </div>
+  </div>
+
+  <div class="cols">
+    <div class="col-main">
+
+      <div class="card">
+        <div class="card-head">Server</div>
+        <div class="card-body">
+          <label class="lbl" for="serverUrl">Server address</label>
+          <input id="serverUrl" type="text" spellcheck="false" placeholder="http://nfsw.dartpower.xyz">
+          <div class="hint">Domain or full URL. The launcher appends <b>/Engine.svc</b> automatically.</div>
+
+          <div class="row">
+            <div class="grow">
+              <label class="lbl" for="region">Region</label>
+              <select id="region">
+                <option value="US">US</option>
+                <option value="EU">EU</option>
+                <option value="WORLD">WORLD</option>
+              </select>
+            </div>
+            <div class="grow">
+              <label class="lbl" for="extraArgs">Extra arguments</label>
+              <input id="extraArgs" type="text" spellcheck="false" placeholder="optional">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">Game</div>
+        <div class="card-body">
+          <label class="lbl" for="gamePath">nfsw.exe</label>
+          <div class="row">
+            <input id="gamePath" class="grow" type="text" spellcheck="false" placeholder="nfsw\nfsw.exe">
+            <button id="btnBrowse" class="btn">Browse...</button>
+          </div>
+          <div class="hint" id="gameHint">Leave a relative path if the game folder sits next to the launcher.</div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button id="btnPlay" class="btn primary big">&#9654; Play</button>
+        <button id="btnCheck" class="btn">Check server</button>
+        <button id="btnSave" class="btn">Save</button>
+        <button id="btnSite" class="btn">Public board</button>
+      </div>
+
+      <div class="log" id="log"></div>
+
+    </div>
+
+    <div class="col-side">
+
+      <div class="card">
+        <div class="card-head">Server status</div>
+        <div class="card-body">
+          <table class="kv">
+            <tr><td>drivers online</td><td id="kOnline" class="v">-</td></tr>
+            <tr><td>personas</td><td id="kPersonas" class="v">-</td></tr>
+            <tr><td>relay rooms</td><td id="kRooms" class="v">-</td></tr>
+            <tr><td>uptime</td><td id="kUptime" class="v">-</td></tr>
+            <tr><td>build</td><td id="kVersion" class="v">-</td></tr>
+          </table>
+          <div class="sep"></div>
+          <div class="svc-row">
+            <span class="svc" id="svcEngine">engine</span>
+            <span class="svc" id="svcXmpp">chat</span>
+            <span class="svc" id="svcRelay">relay</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">News</div>
+        <div class="card-body news" id="newsBox">
+          <div class="news-item">
+            <div class="news-title">Welcome to DPT.Server</div>
+            <div class="news-body">Sign in, pick a car and enjoy the streets. Online play, garage and
+              shop are handled by this server.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">Options</div>
+        <div class="card-body">
+          <label class="check"><input id="optSound" type="checkbox" checked> notification sounds</label>
+          <label class="check"><input id="optClose" type="checkbox" checked> close launcher when the game starts</label>
+          <div class="sep"></div>
+          <div class="row">
+            <button id="btnTheme" class="btn small">Toggle theme</button>
+            <button id="btnQuit" class="btn small">Quit</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="footer">
+    <span>DPT.Server launcher - MSHTML, no external libraries</span>
+    <span id="connLabel" class="dim">not checked yet</span>
+  </div>
+</div>
+
+<!--APP-->
+</body>
+</html>
