@@ -228,7 +228,15 @@ namespace Dpt.NfsWorld
             {
                 string host = "localhost";
                 string[] lan = Util.LocalIPv4();
-                if (lan.Length > 0) host = lan[0];
+                for (int i = 0; i < lan.Length; i++)
+                {
+                    if (Util.IsPrivateIpv4(lan[i]) && !lan[i].StartsWith("169.254.", StringComparison.Ordinal))
+                    {
+                        host = lan[i];
+                        break;
+                    }
+                }
+                if (host == "localhost" && lan.Length > 0) host = lan[0];
                 Console.ForegroundColor = ConsoleColor.Green;
                 Console.WriteLine("  READY - the server is running, this window is the console");
                 Console.ResetColor();

@@ -1,260 +1,290 @@
-<!doctype html>
-<html lang="en">
+﻿<!DOCTYPE html>
+<html lang="ru" data-theme="light" data-role="admin">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>DPT.Server - Admin</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%23953a3a'/><text x='32' y='42' font-family='Segoe UI,Arial' font-size='22' font-weight='bold' fill='white' text-anchor='middle'>ADM</text></svg>">
-<link rel="stylesheet" href="assets/css/theme.css">
-<link rel="stylesheet" href="assets/css/icons.css">
+<meta name="color-scheme" content="light dark">
+<meta name="robots" content="noindex, nofollow">
+<title>DPT.Server · Admin</title>
+<link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
+<link rel="stylesheet" href="assets/css/app.css?v=2">
+<link rel="stylesheet" href="assets/css/icons.css?v=2">
+<link rel="stylesheet" href="assets/css/dpt.css?v=2">
 </head>
-<body data-role="admin" data-theme-default="dark">
+<body>
 
-<header class="topbar">
+<header class="topbar" id="topbar">
   <div class="topbar-inner">
-    <div class="brand">
-      <div class="logo" style="background:linear-gradient(145deg,#d98a8a,#7d2b2b);">ADM</div>
-      <div>
-        <div class="title">DPT.Server</div>
-        <div class="subtitle">Admin board</div>
-      </div>
-    </div>
+    <a class="brand" href="./" title="DPT.Server · NFS World">
+      <span class="brand-mark"><i class="fas fa-flag-checkered"></i></span>
+      <span class="brand-text">
+        <b>DPT.Server</b>
+        <small>Admin board</small>
+      </span>
+    </a>
 
-    <nav class="nav">
-      <button class="tab active" data-tab="dashboard"><i class="fa fa-house"></i> Overview</button>
-      <button class="tab" data-tab="players"><i class="fa fa-users"></i> Players</button>
-      <button class="tab" data-tab="accounts"><i class="fa fa-user"></i> Accounts</button>
-      <button class="tab" data-tab="relay"><i class="fa fa-signal"></i> Relay</button>
-      <button class="tab" data-tab="logs"><i class="fa fa-terminal"></i> Logs</button>
-      <button class="tab" data-tab="actions"><i class="fa fa-bolt"></i> Actions</button>
-      <button class="tab" data-tab="feed"><i class="fa fa-comment"></i> Events</button>
-      <button class="tab" data-tab="help"><i class="fa fa-question"></i> Help</button>
+    <nav class="tabs" aria-label="Разделы">
+      <button class="tab active" data-tab="dashboard"><i class="fas fa-gauge"></i><span>Обзор</span></button>
+      <button class="tab" data-tab="players"><i class="fas fa-users"></i><span>Игроки</span></button>
+      <button class="tab" data-tab="accounts"><i class="fas fa-users-gear"></i><span>Аккаунты</span></button>
+      <button class="tab" data-tab="relay"><i class="fas fa-tower-broadcast"></i><span>Relay</span></button>
+      <button class="tab" data-tab="logs"><i class="fas fa-terminal"></i><span>Логи</span></button>
+      <button class="tab" data-tab="actions"><i class="fas fa-bolt"></i><span>Действия</span></button>
+      <button class="tab" data-tab="feed"><i class="fas fa-bell"></i><span>События</span></button>
+      <button class="tab" data-tab="help"><i class="fas fa-circle-question"></i><span>Справка</span></button>
     </nav>
 
-    <div class="toolbar">
-      <span class="dot" id="connDot" title="waiting for the server"></span>
-      <button class="iconbtn" id="btnRefresh" title="Refresh now"><i class="fa fa-rotate"></i></button>
-      <button class="iconbtn" id="btnSound" title="Sounds"><i class="fa fa-volume"></i></button>
-      <button class="iconbtn" id="btnTheme" title="Theme"><i class="fa fa-moon"></i></button>
+    <div class="top-right">
+      <span class="role-pill admin" title="Админская доска (только LAN)"><i class="fas fa-user-shield"></i> admin</span>
+      <span class="conn-pill" id="connPill" title="Состояние связи с сервером">
+        <span class="dot"></span><span class="txt" id="connText">подключение…</span>
+      </span>
+      <button class="icon-btn" id="btnRefresh" title="Обновить сейчас"><i class="fas fa-rotate"></i></button>
+      <button class="icon-btn" id="btnSound" title="Звуки"><i class="fas fa-volume-high"></i></button>
+      <button class="icon-btn" id="btnTheme" title="Сменить тему"><i class="fas fa-moon"></i></button>
     </div>
+  </div>
+
+  <div class="topbar-stats">
+    <span><i class="fas fa-clock"></i> uptime <b id="tUptime">–</b></span>
+    <span><i class="fas fa-users"></i> online <b id="tOnline">0</b></span>
+    <span><i class="fas fa-user"></i> personas <b id="tPersonas">0</b></span>
+    <span><i class="fas fa-server"></i> engine <b id="tEngine">–</b></span>
+    <span><i class="fas fa-comment"></i> chat <b id="tXmpp">–</b></span>
+    <span><i class="fas fa-tower-broadcast"></i> relay <b id="tRelay">–</b></span>
+    <span class="right"><i class="fas fa-car"></i> nfsw <b id="tPort">44600</b> · web <b id="tWebPort">44602</b></span>
   </div>
 </header>
 
 <main class="wrap">
 
-  <!-- ------------------------------------------------------------- login card -->
-  <section class="card" id="adminLogin" style="max-width:460px;margin:40px auto">
-    <header><h2><i class="fa fa-shield"></i> Admin sign in</h2><span class="chip warn">LAN only</span></header>
-    <div class="body">
-      <p class="small muted" style="margin-top:0">
-        Paste the token from <code class="mono">config.ini</code> (<code>web.adminToken</code>).
-        It is kept in this browser tab only, sent as the <code>X-Admin-Token</code> header and
-        never stored on disk.
-      </p>
-      <label class="field"><span>Admin token</span>
-        <input id="adminToken" type="password" autocomplete="off" spellcheck="false" placeholder="paste token">
-      </label>
-      <div class="row">
-        <button class="primary" id="btnLogin"><i class="fa fa-check"></i> Sign in</button>
-      </div>
+  <section class="stat-grid" id="statCards" aria-live="polite">
+    <div class="stat">
+      <div class="stat-ico i-blue"><i class="fas fa-users"></i></div>
+      <div class="stat-body"><span class="stat-label">Онлайн</span><span class="stat-value" id="sOnline">0</span></div>
+      <span class="stat-sub" id="sOnlineSub">0 сессий</span>
+    </div>
+    <div class="stat">
+      <div class="stat-ico i-violet"><i class="fas fa-user"></i></div>
+      <div class="stat-body"><span class="stat-label">Персонажи</span><span class="stat-value" id="sPersonas">0</span></div>
+      <span class="stat-sub" id="sPersonasSub">0 аккаунтов</span>
+    </div>
+    <div class="stat">
+      <div class="stat-ico i-green"><i class="fas fa-car"></i></div>
+      <div class="stat-body"><span class="stat-label">Машины</span><span class="stat-value" id="sCars">0</span></div>
+      <span class="stat-sub" id="sCarsSub">в гаражах</span>
+    </div>
+    <div class="stat">
+      <div class="stat-ico i-amber"><i class="fas fa-tower-broadcast"></i></div>
+      <div class="stat-body"><span class="stat-label">Relay</span><span class="stat-value" id="sRooms">0</span></div>
+      <span class="stat-sub" id="sRoomsSub">0 клиентов</span>
+    </div>
+    <div class="stat">
+      <div class="stat-ico i-cyan"><i class="fas fa-right-left"></i></div>
+      <div class="stat-body"><span class="stat-label">Трафик</span><span class="stat-value" id="sTraffic">0 B</span></div>
+      <span class="stat-sub" id="sTrafficSub">↓0 B ↑0 B</span>
+    </div>
+    <div class="stat">
+      <div class="stat-ico i-red"><i class="fas fa-heart-pulse"></i></div>
+      <div class="stat-body"><span class="stat-label">Статус</span><span class="stat-value" id="sHealth">ok</span></div>
+      <span class="stat-sub" id="sHealthSub">в сети</span>
     </div>
   </section>
 
-  <div id="adminBar">
-    <!-- ------------------------------------------------------------ dashboard -->
-    <section class="panel active" data-panel="dashboard">
-      <div class="grid cols-3">
-        <div class="card"><div class="stat"><div class="ico"><i class="fa fa-users"></i></div><div><div class="value" id="sOnline">0</div><div class="label">drivers online</div></div></div></div>
-        <div class="card"><div class="stat"><div class="ico"><i class="fa fa-chart"></i></div><div><div class="value" id="sRequests">0</div><div class="label">http requests</div></div></div></div>
-        <div class="card"><div class="stat"><div class="ico"><i class="fa fa-signal"></i></div><div><div class="value" id="sRooms">0</div><div class="label">relay rooms</div></div></div></div>
-      </div>
+  <div class="columns">
+    <div class="col-main">
 
-      <div class="grid cols-2" style="margin-top:14px">
-        <div class="card">
-          <header><h2><i class="fa fa-server"></i> Server</h2><span class="chip" id="sVersion">v?</span></header>
-          <div class="body">
-            <div class="pill-row" style="margin-bottom:10px">
-              <span class="chip" id="svcEngine">engine</span>
-              <span class="chip" id="svcXmpp">chat</span>
-              <span class="chip" id="svcRelay">relay</span>
-              <span class="chip" id="svcPublic">public</span>
-              <span class="chip" id="svcAdmin">admin</span>
-            </div>
-            <div class="kv">
-              <div class="k">Uptime</div><div class="v" id="sUptime">-</div>
-              <div class="k">Sessions</div><div class="v" id="sSessions">0</div>
-              <div class="k">Accounts</div><div class="v" id="sAccounts">0</div>
-              <div class="k">Personas</div><div class="v" id="sPersonas">0</div>
-              <div class="k">Cars owned</div><div class="v" id="sCars">0</div>
-              <div class="k">Relay in / out</div><div class="v"><span id="sRelayIn">0 B</span> / <span id="sRelayOut">0 B</span></div>
-              <div class="k">Relay packets</div><div class="v" id="sRelayPackets">0 / 0</div>
-              <div class="k">Relay dropped</div><div class="v" id="sRelayDropped">0</div>
-            </div>
-            <div class="sep"></div>
-            <div class="kv">
-              <div class="k">Working directory</div><div class="v mono" id="aPath">-</div>
-              <div class="k">Log directory</div><div class="v mono" id="aLogDir">-</div>
-              <div class="k">State directory</div><div class="v mono" id="aState">-</div>
-              <div class="k">Memory</div><div class="v" id="aMemory">-</div>
-              <div class="k">Engine</div><div class="v" id="aEngine">-</div>
-            </div>
+      <section class="panel" data-panel="dashboard">
+        <div class="panel-head">
+          <h2><i class="fas fa-server"></i> Сервер</h2>
+          <span class="panel-badge" id="sVersion">v0.1.0</span>
+        </div>
+        <div class="panel-body">
+          <div class="svc-chips">
+            <span class="chip" id="svcEngine">engine</span>
+            <span class="chip" id="svcXmpp">chat</span>
+            <span class="chip" id="svcRelay">relay</span>
+            <span class="chip" id="svcPublic">public</span>
+            <span class="chip" id="svcAdmin">admin</span>
+          </div>
+          <div class="about">
+            <div class="about-row"><span>Запросов обработано</span><b id="sRequests">0</b></div>
+            <div class="about-row"><span>Uptime</span><b id="sUptime">–</b></div>
+            <div class="about-row"><span>Рабочая папка</span><b id="aPath">–</b></div>
+            <div class="about-row"><span>Логи</span><b id="aLogDir">–</b></div>
+            <div class="about-row"><span>Состояние</span><b id="aState">–</b></div>
+            <div class="about-row"><span>Память</span><b id="aMemory">–</b></div>
+            <div class="about-row"><span>Engine</span><b id="aEngine">–</b></div>
+            <div class="about-row"><span>Профиль клиента</span><b id="aProfile">–</b></div>
           </div>
         </div>
+      </section>
 
-        <div class="card">
-          <header><h2><i class="fa fa-car"></i> Client profiles</h2><span class="chip">multi-version</span></header>
-          <div class="body" id="profilesBox"><div class="empty">loading...</div></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- -------------------------------------------------------------- players -->
-    <section class="panel" data-panel="players">
-      <div class="card">
-        <header>
-          <h2><i class="fa fa-users"></i> Online drivers <span class="chip" id="playerCount">0</span></h2>
-          <div class="row" style="flex:0 0 260px"><input id="search" type="search" placeholder="search name, ip, id..."></div>
-        </header>
-        <div class="body tight">
-          <div class="empty" id="playersEmpty">nobody is driving right now</div>
-          <table class="list" id="playersTable" style="display:none">
-            <thead><tr>
-              <th>id</th><th>driver</th><th class="num">lvl</th><th class="num">rep</th><th class="num">cash</th>
-              <th>car</th><th class="num">online</th><th class="num">idle</th><th>ip</th><th>token</th><th class="num">req</th><th></th>
-            </tr></thead>
-            <tbody id="playersBody"></tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
-    <!-- ------------------------------------------------------------- accounts -->
-    <section class="panel" data-panel="accounts">
-      <div class="card">
-        <header>
-          <h2><i class="fa fa-user"></i> Accounts <span class="chip" id="accountsCount">0</span></h2>
-          <div class="row">
-            <button class="small" id="btnReload"><i class="fa fa-rotate"></i> reload profiles</button>
-            <button class="small" id="btnSave"><i class="fa fa-download"></i> save state</button>
-            <button class="small" id="btnLogout">forget token</button>
+      <section class="panel" data-panel="players">
+        <div class="panel-head">
+          <h2><i class="fas fa-users"></i> Игроки онлайн</h2>
+          <div class="panel-tools">
+            <label class="search">
+              <i class="fas fa-search"></i>
+              <input type="search" id="search" placeholder="Поиск: имя, ip, id…" autocomplete="off" spellcheck="false">
+            </label>
+            <button class="btn ghost" id="btnRefresh2" title="Обновить сейчас"><i class="fas fa-rotate"></i></button>
           </div>
-        </header>
-        <div class="body tight">
-          <table class="list">
-            <thead><tr><th>id</th><th>account</th><th>last login</th><th>personas</th><th></th></tr></thead>
-            <tbody id="accountsBody"><tr><td colspan="5" class="empty">open this tab with a valid token</td></tr></tbody>
-          </table>
         </div>
-      </div>
-    </section>
-
-    <!-- ---------------------------------------------------------------- relay -->
-    <section class="panel" data-panel="relay">
-      <div class="card">
-        <header><h2><i class="fa fa-signal"></i> NAT hairpin relay</h2><span class="chip" id="relaySummary">-</span></header>
-        <div class="body tight">
-          <div class="empty" id="relayEmpty">no relay rooms yet</div>
-          <table class="list" id="relayTable" style="display:none">
-            <thead><tr><th>room</th><th class="num">clients</th><th class="num">packets in / out</th><th class="num">bytes in / out</th><th>members (endpoint, persona, * = hairpin)</th></tr></thead>
-            <tbody id="relayBody"></tbody>
-          </table>
+        <div class="panel-body pad-0">
+          <div class="empty" id="playersEmpty">пока никто не катается</div>
+          <div class="table-scroll">
+            <table class="players" id="playersTable" style="display:none">
+              <thead><tr>
+                <th>id</th><th>игрок</th><th class="num">lvl</th><th class="num">cash</th>
+                <th>машина</th><th class="num">онлайн</th><th>ip</th><th class="num">req</th><th></th>
+              </tr></thead>
+              <tbody id="playersBody"></tbody>
+            </table>
+          </div>
         </div>
-      </div>
-    </section>
+        <div class="panel-foot"><span id="playerCount">0</span></div>
+      </section>
 
-    <!-- ----------------------------------------------------------------- logs -->
-    <section class="panel" data-panel="logs">
-      <div class="card">
-        <header>
-          <h2><i class="fa fa-terminal"></i> Protocol log</h2>
-          <div class="row">
-            <select id="logsLevel" style="width:110px">
-              <option value="">all</option>
+      <section class="panel" data-panel="accounts">
+        <div class="panel-head">
+          <h2><i class="fas fa-users-gear"></i> Аккаунты</h2>
+          <div class="panel-tools">
+            <span class="panel-badge" id="accountsCount">0</span>
+            <button class="btn ghost sm" id="btnReload"><i class="fas fa-rotate"></i> reload</button>
+            <button class="btn ghost sm" id="btnSave"><i class="fas fa-download"></i> save</button>
+            <button class="btn ghost sm" id="btnLogout"><i class="fas fa-unlock"></i> forget token</button>
+          </div>
+        </div>
+        <div class="panel-body pad-0">
+          <div class="table-scroll">
+            <table class="players">
+              <thead><tr><th>id</th><th>аккаунт</th><th>последний вход</th><th>персонажи</th><th></th></tr></thead>
+              <tbody id="accountsBody"><tr><td colspan="5" class="empty">нужен токен</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel logs-panel" data-panel="logs">
+        <div class="panel-head">
+          <h2><i class="fas fa-terminal"></i> Протокол</h2>
+          <div class="log-tools">
+            <select id="logsLevel" title="Уровень">
+              <option value="">все</option>
               <option value="Info">info+</option>
               <option value="Debug">debug+</option>
               <option value="Verbose">verbose</option>
               <option value="Warn">warn+</option>
               <option value="Error">errors</option>
             </select>
-            <button class="small" id="btnLogsPause">pause</button>
-            <button class="small" id="btnLogsClear">clear</button>
+            <button class="mini" id="btnLogsPause" title="Пауза"><i class="fas fa-pause"></i></button>
+            <button class="mini" id="btnLogsClear" title="Очистить"><i class="fas fa-rotate"></i></button>
           </div>
-        </header>
-        <div class="logview" id="logsView"></div>
-      </div>
-    </section>
+        </div>
+        <div class="log-view" id="logsView"><div class="log-empty">нет записей</div></div>
+      </section>
 
-    <!-- -------------------------------------------------------------- actions -->
-    <section class="panel" data-panel="actions">
-      <div class="grid cols-2">
-        <div class="card">
-          <header><h2><i class="fa fa-comment"></i> Announce to everyone</h2></header>
-          <div class="body">
-            <p class="small muted" style="margin-top:0">Delivered to every connected EA-Chat client (in-game lobby).</p>
-            <textarea id="announceText" rows="4" maxlength="400" placeholder="Server restart in 10 minutes, finish your race!"></textarea>
-            <div class="row" style="margin-top:8px"><button class="primary" id="btnAnnounce"><i class="fa fa-comment"></i> Send</button></div>
+      <section class="panel" data-panel="relay">
+        <div class="panel-head">
+          <h2><i class="fas fa-tower-broadcast"></i> NAT hairpin relay</h2>
+          <span class="panel-badge" id="relaySummary">–</span>
+        </div>
+        <div class="panel-body pad-0">
+          <div class="empty" id="relayEmpty">пока нет комнат</div>
+          <div class="table-scroll">
+            <table class="players" id="relayTable" style="display:none">
+              <thead><tr><th>комната</th><th class="num">клиентов</th><th class="num">пакеты in/out</th><th class="num">байты in/out</th><th>участники</th></tr></thead>
+              <tbody id="relayBody"></tbody>
+            </table>
           </div>
         </div>
-        <div class="card">
-          <header><h2><i class="fa fa-power"></i> Server control</h2></header>
-          <div class="body">
-            <p class="small muted" style="margin-top:0">
-              Shutdown asks the process to stop gracefully: pending purchases are saved,
-              sessions expire and the log is flushed first.
-            </p>
-            <button class="danger" id="btnShutdown"><i class="fa fa-power"></i> Stop server</button>
-          </div>
-        </div>
-      </div>
-    </section>
+      </section>
 
-    <!-- ----------------------------------------------------------------- feed -->
-    <section class="panel" data-panel="feed">
-      <div class="card">
-        <header><h2><i class="fa fa-comment"></i> Live events</h2><span class="chip">server feed</span></header>
-        <ul class="feed" id="feedList">
-          <li><span class="t">--:--</span><span class="muted">waiting for events...</span><span></span></li>
-        </ul>
-      </div>
-    </section>
+      <section class="panel" data-panel="actions">
+        <div class="panel-head"><h2><i class="fas fa-bolt"></i> Действия</h2></div>
+        <div class="panel-body stack">
+          <label class="tiny muted" for="announceText">Объявление всем клиентам EA-Chat</label>
+          <textarea class="input" id="announceText" rows="3" maxlength="400" placeholder="Сервер перезапустится через 10 минут, доедьте гонку!"></textarea>
+          <div class="row-actions">
+            <button class="btn" id="btnAnnounce"><i class="fas fa-comment"></i> Отправить</button>
+            <button class="btn danger" id="btnShutdown"><i class="fas fa-power"></i> Остановить сервер</button>
+          </div>
+        </div>
+      </section>
 
-    <!-- ----------------------------------------------------------------- help -->
-    <section class="panel" data-panel="help">
-      <div class="grid cols-2">
-        <div class="card">
-          <header><h2><i class="fa fa-shield"></i> Security model</h2></header>
-          <div class="body small">
-            <ul style="margin:0;padding-left:18px;line-height:1.8">
-              <li>The admin board refuses non-private IPs (<code>web.adminPrivateOnly</code>).</li>
-              <li>Every admin API call needs the token; failures are throttled and banned per IP.</li>
-              <li>The public board API never returns IPs, tokens, machine ids or logs.</li>
-              <li>Publish only the public port through NGinx Proxy Manager, over HTTPS.</li>
-            </ul>
-          </div>
+      <section class="panel" data-panel="feed">
+        <div class="panel-head">
+          <h2><i class="fas fa-bell"></i> События</h2>
+          <span class="panel-badge" id="feedCount">0</span>
         </div>
-        <div class="card">
-          <header><h2><i class="fa fa-terminal"></i> Console commands</h2></header>
-          <div class="body">
-            <pre class="code">status            services, counts, traffic
-players           online personas
-kick &lt;id&gt; [why]   kick a persona (session + chat)
-say &lt;text&gt;        announcement to every client
-reload            re-read data/profiles
-save              flush accounts/personas
-links             show board URLs
-quit              stop the server</pre>
-          </div>
+        <div class="panel-body feed" id="feedList">
+          <div class="empty small">тишина…</div>
         </div>
-      </div>
-    </section>
+      </section>
+
+      <section class="panel" data-panel="help">
+        <div class="panel-head"><h2><i class="fas fa-circle-question"></i> Справка</h2></div>
+        <div class="panel-body about">
+          <div class="about-row"><span>Админка</span><b>только LAN</b></div>
+          <div class="about-row"><span>Токен</span><b>config.ini → web.adminToken</b></div>
+          <div class="about-row"><span>Заголовок</span><b>X-Admin-Token</b></div>
+          <div class="about-row"><span>Консоль</span><b>status · players · kick · say</b></div>
+          <div class="about-note">Публичная доска не отдаёт IP, токены, machine id и логи — сервер их просто не сериализует. Наружу публикуйте только публичный порт.</div>
+        </div>
+      </section>
+
+    </div>
+
+    <aside class="col-side">
+
+      <section class="panel compact">
+        <div class="panel-head"><h2><i class="fas fa-layer-group"></i> Профили клиентов</h2><span class="panel-badge">multi-version</span></div>
+        <div class="panel-body list" id="profilesBox"><div class="empty small">загрузка…</div></div>
+      </section>
+
+      <section class="panel compact">
+        <div class="panel-head"><h2><i class="fas fa-circle-info"></i> О сервере</h2></div>
+        <div class="panel-body about">
+          <div class="about-row"><span>Игра</span><b>NFS World</b></div>
+          <div class="about-row"><span>Engine</span><b id="aEnginePort">44600</b></div>
+          <div class="about-row"><span>EA-Chat</span><b id="aXmppPort">44603</b></div>
+          <div class="about-row"><span>Relay (UDP)</span><b id="aRelayPort">44610</b></div>
+          <div class="about-row"><span>Версия</span><b id="aVersion">–</b></div>
+          <div class="about-row"><span>Сборка</span><b id="aBuild">–</b></div>
+          <div class="about-note">DPT.Server · .NET 4.0 · без внешних библиотек</div>
+        </div>
+      </section>
+
+    </aside>
   </div>
+
+  <footer class="footer">
+    <span><b id="fName">DPT.Server</b> <span id="fVersion">v0.1.0</span> · <span id="fBuild">–</span></span>
+    <span class="sep">·</span>
+    <span>Need For Speed World · admin board</span>
+    <span class="sep">·</span>
+    <span id="fUptime">uptime –</span>
+    <span class="right" id="fHost">–</span>
+  </footer>
 
 </main>
 
-<div class="toasts" id="toasts"></div>
+<div class="toasts" id="toasts" aria-live="polite" aria-atomic="false"></div>
 
-<script src="assets/js/sound.js"></script>
-<script src="assets/js/ui.js"></script>
-<script src="assets/js/app.js"></script>
+<div class="auth-gate" id="authGate" hidden>
+  <form class="auth-card" id="authForm" autocomplete="off">
+    <div class="auth-brand"><i class="fas fa-user-shield"></i> DPT.Server <span>admin</span></div>
+    <p>Введите <b>admin token</b> из <code>config.ini</code> (<code>web.adminToken</code>).</p>
+    <input class="input" type="password" id="authToken" placeholder="admin token" autocomplete="current-password" spellcheck="false">
+    <button class="btn" type="submit" id="authGo"><i class="fas fa-unlock"></i> Войти</button>
+    <div class="auth-error" id="authError"></div>
+    <small>Токен хранится только в этой вкладке, уходит в заголовке <code>X-Admin-Token</code> и не пишется на диск.</small>
+  </form>
+</div>
+
+<script src="assets/js/sound.js?v=2"></script>
+<script src="assets/js/ui.js?v=2"></script>
+<script src="assets/js/app.js?v=2"></script>
 </body>
 </html>

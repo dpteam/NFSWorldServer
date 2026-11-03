@@ -1,208 +1,232 @@
-<!doctype html>
-<html lang="en">
+﻿<!DOCTYPE html>
+<html lang="ru" data-theme="light" data-role="public">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>DPT.Server - NFS World</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%232f5c95'/><text x='32' y='42' font-family='Segoe UI,Arial' font-size='24' font-weight='bold' fill='white' text-anchor='middle'>DPT</text></svg>">
-<link rel="stylesheet" href="assets/css/theme.css">
-<link rel="stylesheet" href="assets/css/icons.css">
+<meta name="color-scheme" content="light dark">
+<title>DPT.Server · NFS World</title>
+<link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
+<link rel="stylesheet" href="assets/css/app.css?v=2">
+<link rel="stylesheet" href="assets/css/icons.css?v=2">
+<link rel="stylesheet" href="assets/css/dpt.css?v=2">
 </head>
-<body data-role="public" data-theme-default="light">
+<body>
 
-<header class="topbar">
+<header class="topbar" id="topbar">
   <div class="topbar-inner">
-    <div class="brand">
-      <div class="logo">DPT</div>
-      <div>
-        <div class="title">DPT.Server</div>
-        <div class="subtitle">Need For Speed World</div>
-      </div>
-    </div>
+    <a class="brand" href="./" title="DPT.Server · Need For Speed World">
+      <span class="brand-mark"><i class="fas fa-flag-checkered"></i></span>
+      <span class="brand-text">
+        <b>DPT.Server</b>
+        <small>NFS World</small>
+      </span>
+    </a>
 
-    <nav class="nav">
-      <button class="tab active" data-tab="dashboard"><i class="fa fa-house"></i> Overview</button>
-      <button class="tab" data-tab="players"><i class="fa fa-users"></i> Players</button>
-      <button class="tab" data-tab="relay"><i class="fa fa-signal"></i> Relay</button>
-      <button class="tab" data-tab="feed"><i class="fa fa-comment"></i> Events</button>
-      <button class="tab" data-tab="help"><i class="fa fa-question"></i> Help</button>
+    <nav class="tabs" aria-label="Разделы">
+      <button class="tab active" data-tab="dashboard"><i class="fas fa-gauge"></i><span>Обзор</span></button>
+      <button class="tab" data-tab="players"><i class="fas fa-users"></i><span>Игроки</span></button>
+      <button class="tab" data-tab="relay"><i class="fas fa-tower-broadcast"></i><span>Relay</span></button>
+      <button class="tab" data-tab="feed"><i class="fas fa-bell"></i><span>События</span></button>
+      <button class="tab" data-tab="help"><i class="fas fa-circle-question"></i><span>Справка</span></button>
     </nav>
 
-    <div class="toolbar">
-      <span class="dot" id="connDot" title="waiting for the server"></span>
-      <button class="iconbtn" id="btnRefresh" title="Refresh now"><i class="fa fa-rotate"></i></button>
-      <button class="iconbtn" id="btnSound" title="Sounds"><i class="fa fa-volume"></i></button>
-      <button class="iconbtn" id="btnTheme" title="Theme"><i class="fa fa-moon"></i></button>
+    <div class="top-right">
+      <span class="role-pill" title="Публичная доска"><i class="fas fa-eye"></i> public</span>
+      <span class="conn-pill" id="connPill" title="Состояние связи с сервером">
+        <span class="dot"></span><span class="txt" id="connText">подключение…</span>
+      </span>
+      <button class="icon-btn" id="btnRefresh" title="Обновить сейчас"><i class="fas fa-rotate"></i></button>
+      <button class="icon-btn" id="btnSound" title="Звуки"><i class="fas fa-volume-high"></i></button>
+      <button class="icon-btn" id="btnTheme" title="Сменить тему"><i class="fas fa-moon"></i></button>
     </div>
+  </div>
+
+  <div class="topbar-stats">
+    <span><i class="fas fa-clock"></i> uptime <b id="tUptime">–</b></span>
+    <span><i class="fas fa-users"></i> online <b id="tOnline">0</b></span>
+    <span><i class="fas fa-user"></i> personas <b id="tPersonas">0</b></span>
+    <span><i class="fas fa-server"></i> engine <b id="tEngine">–</b></span>
+    <span><i class="fas fa-comment"></i> chat <b id="tXmpp">–</b></span>
+    <span><i class="fas fa-tower-broadcast"></i> relay <b id="tRelay">–</b></span>
+    <span class="right"><i class="fas fa-car"></i> nfsw <b id="tPort">44600</b></span>
   </div>
 </header>
 
 <main class="wrap">
 
-  <!-- ------------------------------------------------------------- dashboard -->
-  <section class="panel active" data-panel="dashboard">
-    <div class="grid cols-3">
-      <div class="card">
-        <div class="stat">
-          <div class="ico"><i class="fa fa-users"></i></div>
-          <div>
-            <div class="value" id="sOnline">0</div>
-            <div class="label">drivers online</div>
-          </div>
-        </div>
-      </div>
-      <div class="card">
-        <div class="stat">
-          <div class="ico"><i class="fa fa-user"></i></div>
-          <div>
-            <div class="value" id="sPersonas">0</div>
-            <div class="label">personas</div>
-          </div>
-        </div>
-      </div>
-      <div class="card">
-        <div class="stat">
-          <div class="ico"><i class="fa fa-signal"></i></div>
-          <div>
-            <div class="value" id="sRooms">0</div>
-            <div class="label">relay rooms</div>
-          </div>
-        </div>
-      </div>
+  <section class="stat-grid" id="statCards" aria-live="polite">
+    <div class="stat">
+      <div class="stat-ico i-blue"><i class="fas fa-users"></i></div>
+      <div class="stat-body"><span class="stat-label">Онлайн</span><span class="stat-value" id="sOnline">0</span></div>
+      <span class="stat-sub" id="sOnlineSub">0 сессий</span>
     </div>
+    <div class="stat">
+      <div class="stat-ico i-violet"><i class="fas fa-user"></i></div>
+      <div class="stat-body"><span class="stat-label">Персонажи</span><span class="stat-value" id="sPersonas">0</span></div>
+      <span class="stat-sub" id="sPersonasSub">0 аккаунтов</span>
+    </div>
+    <div class="stat">
+      <div class="stat-ico i-green"><i class="fas fa-car"></i></div>
+      <div class="stat-body"><span class="stat-label">Машины</span><span class="stat-value" id="sCars">0</span></div>
+      <span class="stat-sub" id="sCarsSub">в гаражах</span>
+    </div>
+    <div class="stat">
+      <div class="stat-ico i-amber"><i class="fas fa-tower-broadcast"></i></div>
+      <div class="stat-body"><span class="stat-label">Relay</span><span class="stat-value" id="sRooms">0</span></div>
+      <span class="stat-sub" id="sRoomsSub">0 клиентов</span>
+    </div>
+    <div class="stat">
+      <div class="stat-ico i-cyan"><i class="fas fa-right-left"></i></div>
+      <div class="stat-body"><span class="stat-label">Трафик</span><span class="stat-value" id="sTraffic">0 B</span></div>
+      <span class="stat-sub" id="sTrafficSub">↓0 B ↑0 B</span>
+    </div>
+    <div class="stat">
+      <div class="stat-ico i-red"><i class="fas fa-heart-pulse"></i></div>
+      <div class="stat-body"><span class="stat-label">Статус</span><span class="stat-value" id="sHealth">ok</span></div>
+      <span class="stat-sub" id="sHealthSub">в сети</span>
+    </div>
+  </section>
 
-    <div class="grid cols-2" style="margin-top:14px">
-      <div class="card">
-        <header><h2><i class="fa fa-server"></i> Server</h2><span class="chip" id="sVersion">v?</span></header>
-        <div class="body">
-          <div class="pill-row" style="margin-bottom:10px">
+  <div class="columns">
+    <div class="col-main">
+
+      <section class="panel" data-panel="dashboard">
+        <div class="panel-head">
+          <h2><i class="fas fa-server"></i> Сервер</h2>
+          <span class="panel-badge" id="sVersion">v0.1.0</span>
+        </div>
+        <div class="panel-body">
+          <div class="svc-chips">
             <span class="chip" id="svcEngine">engine</span>
             <span class="chip" id="svcXmpp">chat</span>
             <span class="chip" id="svcRelay">relay</span>
             <span class="chip" id="svcPublic">public</span>
             <span class="chip" id="svcAdmin">admin</span>
           </div>
-          <div class="kv">
-            <div class="k">Uptime</div><div class="v" id="sUptime">-</div>
-            <div class="k">Sessions</div><div class="v" id="sSessions">0</div>
-            <div class="k">Accounts</div><div class="v" id="sAccounts">0</div>
-            <div class="k">Cars owned</div><div class="v" id="sCars">0</div>
-            <div class="k">HTTP requests</div><div class="v" id="sRequests">0</div>
-            <div class="k">Relay traffic in</div><div class="v" id="sRelayIn">0 B</div>
-            <div class="k">Relay traffic out</div><div class="v" id="sRelayOut">0 B</div>
-            <div class="k">Relay packets in / out</div><div class="v" id="sRelayPackets">0 / 0</div>
-            <div class="k">Relay dropped</div><div class="v" id="sRelayDropped">0</div>
+          <div class="about">
+            <div class="about-row"><span>Запросов обработано</span><b id="sRequests">0</b></div>
+            <div class="about-row"><span>Uptime</span><b id="sUptime">–</b></div>
+            <div class="about-row"><span>Профиль клиента</span><b id="aProfile">–</b></div>
+            <div class="about-row"><span>Публичный адрес</span><b id="aPublicUrl">–</b></div>
+            <div class="about-note">Публичная доска: только просмотр. Кик, аккаунты и логи доступны администратору локально.</div>
           </div>
         </div>
-      </div>
+      </section>
 
-      <div class="card">
-        <header><h2><i class="fa fa-car"></i> Client profiles</h2><span class="chip">multi-version</span></header>
-        <div class="body" id="profilesBox">
-          <div class="empty">loading...</div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- --------------------------------------------------------------- players -->
-  <section class="panel" data-panel="players">
-    <div class="card">
-      <header>
-        <h2><i class="fa fa-users"></i> Online drivers <span class="chip" id="playerCount">0</span></h2>
-        <div class="row" style="flex:0 0 260px">
-          <input id="search" type="search" placeholder="search name, car, id...">
-        </div>
-      </header>
-      <div class="body tight">
-        <div class="empty" id="playersEmpty">nobody is driving right now</div>
-        <table class="list" id="playersTable" style="display:none">
-          <thead>
-            <tr>
-              <th>id</th><th>driver</th><th class="num">lvl</th><th class="num">rep</th>
-              <th class="num">cash</th><th>car</th><th class="num">online</th><th class="num">idle</th>
-            </tr>
-          </thead>
-          <tbody id="playersBody"></tbody>
-        </table>
-      </div>
-    </div>
-  </section>
-
-  <!-- ----------------------------------------------------------------- relay -->
-  <section class="panel" data-panel="relay">
-    <div class="card">
-      <header>
-        <h2><i class="fa fa-signal"></i> NAT hairpin relay</h2>
-        <span class="chip" id="relaySummary">-</span>
-      </header>
-      <div class="body">
-        <p class="small muted" style="margin-top:0">
-          Players behind the same router (or CGNAT) cannot reach each other directly. Their game
-          traffic is forwarded through this UDP relay instead. Rooms group players that should see
-          each other.
-        </p>
-        <div class="empty" id="relayEmpty">no relay rooms yet</div>
-        <table class="list" id="relayTable" style="display:none">
-          <thead><tr><th>room</th><th class="num">clients</th><th class="num">packets in / out</th><th class="num">bytes in / out</th><th>members</th></tr></thead>
-          <tbody id="relayBody"></tbody>
-        </table>
-      </div>
-    </div>
-  </section>
-
-  <!-- ------------------------------------------------------------------ feed -->
-  <section class="panel" data-panel="feed">
-    <div class="card">
-      <header><h2><i class="fa fa-comment"></i> Live events</h2><span class="chip">server feed</span></header>
-      <ul class="feed" id="feedList">
-        <li><span class="t">--:--</span><span class="muted">waiting for events...</span><span></span></li>
-      </ul>
-    </div>
-  </section>
-
-  <!-- ------------------------------------------------------------------ help -->
-  <section class="panel" data-panel="help">
-    <div class="grid cols-2">
-      <div class="card">
-        <header><h2><i class="fa fa-play"></i> How to connect</h2></header>
-        <div class="body">
-          <ol class="small" style="margin:0;padding-left:18px;line-height:1.8">
-            <li>Start the server (<code>run.cmd</code>) or use the launcher.</li>
-            <li>Open <b>NFSWorldLauncher.exe</b>, check the server URL, press <b>Play</b>.</li>
-            <li>Manual launch: <code class="mono">nfsw.exe US http://your-host:44600/Engine.svc a 1</code></li>
-            <li>Create a driver name in-game; it becomes your persona.</li>
-            <li>Invite friends: they only need this page URL and the launcher.</li>
-          </ol>
-        </div>
-      </div>
-      <div class="card">
-        <header><h2><i class="fa fa-shield"></i> Ports</h2></header>
-        <div class="body">
-          <div class="kv">
-            <div class="k">Engine (game)</div><div class="v mono">TCP 44600</div>
-            <div class="k">Public board</div><div class="v mono">TCP 44601</div>
-            <div class="k">Admin board</div><div class="v mono">TCP 44602 (LAN)</div>
-            <div class="k">EA-Chat</div><div class="v mono">TCP 44603</div>
-            <div class="k">UDP relay</div><div class="v mono">UDP 44610</div>
+      <section class="panel" data-panel="players">
+        <div class="panel-head">
+          <h2><i class="fas fa-users"></i> Игроки онлайн</h2>
+          <div class="panel-tools">
+            <label class="search">
+              <i class="fas fa-search"></i>
+              <input type="search" id="search" placeholder="Поиск: имя, машина, id…" autocomplete="off" spellcheck="false">
+            </label>
+            <button class="btn ghost" id="btnRefresh2" title="Обновить сейчас"><i class="fas fa-rotate"></i></button>
           </div>
-          <div class="sep"></div>
-          <p class="small muted">
-            Publish the public board through NGinx Proxy Manager. The game port can be published on
-            the same domain (<code>/Engine.svc</code> path) or on its own subdomain. Keep the admin
-            port inside the LAN.
-          </p>
         </div>
-      </div>
+        <div class="panel-body pad-0">
+          <div class="empty" id="playersEmpty">пока никто не катается</div>
+          <div class="table-scroll">
+            <table class="players" id="playersTable" style="display:none">
+              <thead><tr>
+                <th>id</th><th>игрок</th><th class="num">lvl</th><th class="num">rep</th>
+                <th class="num">cash</th><th>машина</th><th class="num">онлайн</th><th class="num">idle</th>
+              </tr></thead>
+              <tbody id="playersBody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="panel-foot">
+          <span id="playerCount">0</span>
+          <span class="hint"><i class="fas fa-circle-info"></i> данные обновляются автоматически</span>
+        </div>
+      </section>
+
+      <section class="panel" data-panel="relay">
+        <div class="panel-head">
+          <h2><i class="fas fa-tower-broadcast"></i> NAT hairpin relay</h2>
+          <span class="panel-badge" id="relaySummary">–</span>
+        </div>
+        <div class="panel-body pad-0">
+          <div class="empty" id="relayEmpty">пока нет комнат</div>
+          <div class="table-scroll">
+            <table class="players" id="relayTable" style="display:none">
+              <thead><tr><th>комната</th><th class="num">клиентов</th><th class="num">пакеты in/out</th><th class="num">байты in/out</th></tr></thead>
+              <tbody id="relayBody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="panel-foot">
+          <span class="hint"><i class="fas fa-circle-info"></i> два игрока за одним роутером не видят друг друга напрямую — их трафик идёт через relay</span>
+        </div>
+      </section>
+
+      <section class="panel" data-panel="feed">
+        <div class="panel-head">
+          <h2><i class="fas fa-bell"></i> События</h2>
+          <span class="panel-badge" id="feedCount">0</span>
+        </div>
+        <div class="panel-body feed" id="feedList">
+          <div class="empty small">тишина…</div>
+        </div>
+      </section>
+
+      <section class="panel" data-panel="help">
+        <div class="panel-head"><h2><i class="fas fa-circle-question"></i> Как подключиться</h2></div>
+        <div class="panel-body">
+          <div class="about">
+            <div class="about-row"><span>1. Сервер</span><b>уже запущен</b></div>
+            <div class="about-row"><span>2. Лаунчер</span><b>NFSWorldLauncher.exe</b></div>
+            <div class="about-row"><span>3. Адрес</span><b id="hEngine">–</b></div>
+            <div class="about-row"><span>4. Вручную</span><b>nfsw.exe US &lt;url&gt; a 1</b></div>
+          </div>
+          <div class="about-note" style="margin-top:10px">
+            Публичная доска только для просмотра. Игровой endpoint — plain HTTP, EA-Chat — отдельный
+            TLS-порт, relay — UDP. Проброс портов и NPM описаны в docs/DEPLOY.md.
+          </div>
+        </div>
+      </section>
+
     </div>
-  </section>
+
+    <aside class="col-side">
+
+      <section class="panel compact">
+        <div class="panel-head"><h2><i class="fas fa-layer-group"></i> Профили клиентов</h2><span class="panel-badge">multi-version</span></div>
+        <div class="panel-body list" id="profilesBox"><div class="empty small">загрузка…</div></div>
+      </section>
+
+      <section class="panel compact">
+        <div class="panel-head"><h2><i class="fas fa-circle-info"></i> О сервере</h2></div>
+        <div class="panel-body about">
+          <div class="about-row"><span>Игра</span><b>NFS World</b></div>
+          <div class="about-row"><span>Engine</span><b id="aEnginePort">44600</b></div>
+          <div class="about-row"><span>EA-Chat</span><b id="aXmppPort">44603</b></div>
+          <div class="about-row"><span>Relay (UDP)</span><b id="aRelayPort">44610</b></div>
+          <div class="about-row"><span>Версия</span><b id="aVersion">–</b></div>
+          <div class="about-row"><span>Сборка</span><b id="aBuild">–</b></div>
+          <div class="about-note">DPT.Server · .NET 4.0 · без внешних библиотек</div>
+        </div>
+      </section>
+
+    </aside>
+  </div>
+
+  <footer class="footer">
+    <span><b id="fName">DPT.Server</b> <span id="fVersion">v0.1.0</span> · <span id="fBuild">–</span></span>
+    <span class="sep">·</span>
+    <span>Need For Speed World engine</span>
+    <span class="sep">·</span>
+    <span id="fUptime">uptime –</span>
+    <span class="right" id="fHost">public board</span>
+  </footer>
 
 </main>
 
-<div class="toasts" id="toasts"></div>
+<div class="toasts" id="toasts" aria-live="polite" aria-atomic="false"></div>
 
-<script src="assets/js/sound.js"></script>
-<script src="assets/js/ui.js"></script>
-<script src="assets/js/app.js"></script>
+<script src="assets/js/sound.js?v=2"></script>
+<script src="assets/js/ui.js?v=2"></script>
+<script src="assets/js/app.js?v=2"></script>
 </body>
 </html>

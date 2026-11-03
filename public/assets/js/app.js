@@ -1,17 +1,16 @@
 /* =========================================================================
-   DPT.Server - board logic for both roles (public and admin).
-   Public mode never asks for the admin token and never renders private fields.
+   DPT.Server - board logic (public + admin), AdHoc visual language.
+   No dependencies, ES5.
    ========================================================================= */
 (function (global) {
   'use strict';
 
   var UI = global.UI;
   var Sound = global.Sound;
-  var role = document.body.getAttribute('data-role') || 'public';
+  var role = document.documentElement.getAttribute('data-role') || 'public';
   var isAdmin = role === 'admin';
 
   var state = {
-    lastOnline: {},
     lastFeedId: 0,
     lastOnlineCount: -1,
     token: '',
@@ -19,36 +18,34 @@
     logsPaused: false,
     logsFilter: '',
     refreshMs: 3000,
-    firstLoad: true
+    firstLoad: true,
+    accountsAt: 0
   };
+
+  var $ = function (id) { return document.getElementById(id); };
 
   // ---------------------------------------------------------------- settings
 
   function loadPrefs() {
-    var theme = UI.Store.get('dpt.theme', document.body.getAttribute('data-theme-default') || 'light');
-    UI.applyTheme(theme);
-    var soundOn = UI.Store.getBool('dpt.sound', true);
-    Sound.setEnabled(soundOn);
+    UI.applyTheme(UI.Store.get('dpt.theme', document.documentElement.getAttribute('data-theme') || 'light'));
+    Sound.setEnabled(UI.Store.getBool('dpt.sound', true));
     Sound.setVolume(UI.Store.get('dpt.volume', 0.55));
-    syncSoundButton();
+    syncSound();
   }
 
-  function syncSoundButton() {
-    var btn = document.getElementById('btnSound');
+  function syncSound() {
+    var btn = $('btnSound');
     if (!btn) return;
     var on = Sound.isEnabled();
-    btn.classList.toggle('off', !on);
+    btn.classList.toggle('muted', !on);
     var i = btn.querySelector('i');
-    if (i) i.className = 'fa ' + (on ? 'fa-volume' : 'fa-volume-off');
-    btn.title = on ? 'Sounds: on' : 'Sounds: off';
+    if (i) i.className = 'fas ' + (on ? 'fa-volume-high' : 'fa-volume-off');
+    btn.title = on ? 'Звуки включены' : 'Звуки выключены';
   }
 
-  // ------------------------------------------------------------------ tokens
-
   function loadToken() {
-    try {
-      state.token = global.sessionStorage ? (global.sessionStorage.getItem('dpt.admin') || '') : '';
-    } catch (e) { state.token = ''; }
+    try { state.token = global.sessionStorage ? (global.sessionStorage.getItem('dpt.admin') || '') : ''; }
+    catch (e) { state.token = ''; }
   }
 
   function saveToken(t) {
@@ -58,11 +55,11 @@
 
   // --------------------------------------------------------------- rendering
 
-  function setChip(id, ok, textOn, textOff) {
-    var e = document.getElementById(id);
+  function setChip(id, ok, label) {
+    var e = $(id);
     if (!e) return;
-    e.textContent = ok ? (textOn || 'online') : (textOff || 'offline');
-    e.className = 'chip ' + (ok ? 'ok' : 'err');
+    e.textContent = label;
+    e.className = 'chip ' + (ok ? 'ok' : 'bad');
   }
 
   function renderStatus(s) {
@@ -72,34 +69,55 @@
     var tr = s.traffic || {};
 
     UI.setText('sOnline', UI.num(c.online));
-    UI.setText('sSessions', UI.num(c.sessions));
-    UI.setText('sAccounts', UI.num(c.accounts));
+    UI.setText('sOnlineSub', UI.num(c.sessions) + ' сессий');
     UI.setText('sPersonas', UI.num(c.personas));
+    UI.setText('sPersonasSub', UI.num(c.accounts) + ' аккаунтов');
     UI.setText('sCars', UI.num(c.cars));
+    UI.setText('sCarsSub', 'в гаражах');
     UI.setText('sRooms', UI.num(c.rooms));
-    UI.setText('sRequests', UI.num(c.requests) + ' / ' + UI.num(s.engineRequests || 0));
-    UI.setText('sUptime', s.uptime || '');
-    UI.setText('sVersion', 'v' + (s.version || '?') + ' (' + (s.buildDate || '') + ')');
-    UI.setText('sRelayIn', UI.bytes(tr.relayIn));
-    UI.setText('sRelayOut', UI.bytes(tr.relayOut));
-    UI.setText('sRelayPackets', UI.num(tr.relayPacketsIn) + ' / ' + UI.num(tr.relayPacketsOut));
-    UI.setText('sRelayDropped', UI.num(tr.relayDropped));
+    UI.setText('sRoomsSub', UI.num(c.relayClients) + ' клиентов');
+    UI.setText('sTraffic', UI.bytes(tr.relayIn));
+    UI.setText('sTrafficSub', '↓' + UI.bytes(tr.relayIn) + ' ↑' + UI.bytes(tr.relayOut));
+    UI.setText('sHealth', sv.engine ? 'ok' : 'down');
+    UI.setText('sHealthSub', sv.engine ? 'сервер в сети' : 'engine недоступен');
+    UI.setText('sRequests', UI.num(c.requests));
+    UI.setText('sUptime', s.uptime || '–');
+    UI.setText('sVersion', 'v' + (s.version || '?'));
 
-    setChip('svcEngine', !!sv.engine, 'engine ' + (sv.enginePort || ''), 'engine down');
-    setChip('svcXmpp', !!sv.xmpp, 'chat ' + (sv.xmppPort || ''), 'chat down');
-    setChip('svcRelay', !!sv.relay, 'relay ' + (sv.relayPort || ''), 'relay down');
-    setChip('svcPublic', !!sv.webPublic, 'public', 'public down');
-    setChip('svcAdmin', !!sv.webAdmin, 'admin', 'admin down');
+    UI.setText('tUptime', s.uptime || '–');
+    UI.setText('tOnline', UI.num(c.online));
+    UI.setText('tPersonas', UI.num(c.personas));
+    UI.setText('tEngine', sv.engine ? (sv.enginePort || 'on') : 'off');
+    UI.setText('tXmpp', sv.xmpp ? (sv.xmppPort || 'on') : 'off');
+    UI.setText('tRelay', sv.relay ? (sv.relayPort || 'on') : 'off');
+    if (sv.enginePort) UI.setText('tPort', sv.enginePort);
+    if (isAdmin) UI.setText('tWebPort', sv.webAdmin ? 'admin' : 'off');
 
-    var dot = document.getElementById('connDot');
-    if (dot) {
-      dot.className = 'dot ' + (sv.engine ? (sv.relay && sv.xmpp ? 'online' : 'partial') : '');
-      dot.title = sv.engine ? 'server is up' : 'server is unreachable';
+    setChip('svcEngine', !!sv.engine, 'engine ' + (sv.enginePort || ''));
+    setChip('svcXmpp', !!sv.xmpp, 'chat ' + (sv.xmppPort || ''));
+    setChip('svcRelay', !!sv.relay, 'relay ' + (sv.relayPort || ''));
+    setChip('svcPublic', !!sv.webPublic, 'public');
+    setChip('svcAdmin', !!sv.webAdmin, 'admin');
+
+    var pill = $('connPill');
+    if (pill) {
+      pill.className = 'conn-pill ' + (sv.engine ? 'ok' : 'bad');
+      UI.setText('connText', sv.engine ? 'онлайн' : 'нет связи');
     }
 
-    if (s.refreshMs) state.refreshMs = s.refreshMs;
+    UI.setText('aProfile', s.defaultProfile || '–');
+    UI.setText('aPublicUrl', s.publicUrl || '–');
+    UI.setText('aVersion', s.version || '–');
+    UI.setText('aBuild', s.buildDate || '–');
+    UI.setText('aEnginePort', sv.enginePort || '–');
+    UI.setText('aXmppPort', sv.xmppPort || '–');
+    UI.setText('aRelayPort', sv.relayPort || '–');
+    UI.setText('fName', s.name || 'DPT.Server');
+    UI.setText('fVersion', 'v' + (s.version || '?'));
+    UI.setText('fBuild', s.buildDate || '');
+    UI.setText('fUptime', 'uptime ' + (s.uptime || '–'));
+    UI.setText('hEngine', 'http://' + (global.location.hostname || 'localhost') + ':' + (sv.enginePort || 44600) + '/Engine.svc');
 
-    renderProfiles(s.profiles || [], s.defaultProfile);
     if (isAdmin && s.server) {
       UI.setText('aPath', s.server.path);
       UI.setText('aLogDir', s.server.logDir);
@@ -107,233 +125,221 @@
       UI.setText('aMemory', UI.bytes(s.server.workingSet));
       UI.setText('aEngine', UI.num(s.server.engineRequests) + ' req / ' + UI.num(s.server.engineErrors) + ' err');
     }
+
+    if (s.refreshMs) state.refreshMs = s.refreshMs;
+    renderProfiles(s.profiles || []);
   }
 
-  function renderProfiles(list, active) {
-    var box = document.getElementById('profilesBox');
+  function renderProfiles(list) {
+    var box = $('profilesBox');
     if (!box) return;
-    if (!list.length) { box.innerHTML = '<div class="empty">no client profiles installed</div>'; return; }
+    if (!list.length) { box.innerHTML = '<div class="empty small">профилей нет</div>'; return; }
     var html = '';
     for (var i = 0; i < list.length; i++) {
       var p = list[i];
-      html += '<div class="row" style="justify-content:space-between;border-bottom:1px solid var(--border-soft);padding:6px 0">' +
-        '<div><b>' + UI.esc(p.name || p.id) + '</b> <span class="chip ' + (p.default ? 'blue' : '') + '">' + UI.esc(p.id) + '</span>' +
-        (p.build ? ' <span class="chip">build ' + UI.esc(p.build) + '</span>' : '') +
-        '<div class="muted small">' + UI.esc(p.description || '') + '</div></div>' +
-        '<div class="pill-row"><span class="chip">' + UI.esc(p.personaFormat || 'legacy') + '</span>' +
-        (p.default ? '<span class="chip ok">default</span>' : '') + '</div></div>';
+      html += '<div class="li">' +
+        '<span class="avatar">' + UI.esc((p.build || p.id || '?').toString().substring(0, 4)) + '</span>' +
+        '<div class="who"><b>' + UI.esc(p.name || p.id) + (p['default'] ? ' <span class="tag info">default</span>' : '') + '</b>' +
+        '<span>' + UI.esc(p.id) + ' · ' + UI.esc(p.personaFormat || 'legacy') + (p.description ? ' · ' + UI.esc(p.description) : '') + '</span></div>' +
+        '</div>';
     }
     box.innerHTML = html;
   }
 
   function renderPlayers(data) {
-    var body = document.getElementById('playersBody');
+    var body = $('playersBody');
     if (!body) return;
     var players = (data && data.players) || [];
-    var filter = (document.getElementById('search') || {}).value || '';
-    filter = filter.toLowerCase();
-
-    var seen = {};
+    var filter = ($('search') && $('search').value || '').toLowerCase();
     var shown = 0;
     var html = '';
     for (var i = 0; i < players.length; i++) {
       var p = players[i];
-      seen[p.personaId] = true;
-      var hay = (p.name + ' ' + (p.car || '') + ' ' + (p.ip || '') + ' ' + (p.personaId || '')).toLowerCase();
+      var hay = (p.name + ' ' + (p.car || '') + ' ' + (p.ip || '') + ' ' + p.personaId).toLowerCase();
       if (filter && hay.indexOf(filter) < 0) continue;
       shown++;
       html += '<tr>' +
         '<td class="mono">' + UI.esc(p.personaId) + '</td>' +
-        '<td><b>' + UI.esc(p.name) + '</b> ' +
-        (p.xmpp ? '<span class="chip ok" title="EA-Chat connected">chat</span> ' : '') +
-        (p.relay ? '<span class="chip blue" title="UDP relay">relay</span> ' : '') +
-        (p.build ? '<span class="chip">' + UI.esc(p.build) + '</span>' : '') + '</td>' +
+        '<td class="name">' + UI.esc(p.name) +
+        (p.xmpp ? ' <span class="tag ok">chat</span>' : '') +
+        (p.relay ? ' <span class="tag info">relay</span>' : '') +
+        (p.build ? ' <span class="tag">' + UI.esc(p.build) + '</span>' : '') +
+        '</td>' +
         '<td class="num">' + UI.num(p.level) + '</td>' +
-        '<td class="num">' + UI.num(p.rep) + '</td>' +
-        '<td class="num">' + UI.num(p.cash) + '</td>' +
-        '<td>' + UI.esc(p.car || '') + '</td>' +
-        '<td class="num">' + UI.duration(p.onlineMinutes * 60) + '</td>' +
-        '<td class="num">' + UI.duration(p.idleSeconds) + '</td>';
+        (isAdmin
+          ? '<td class="num">' + UI.num(p.cash) + '</td>'
+          : '<td class="num">' + UI.num(p.rep) + '</td><td class="num">' + UI.num(p.cash) + '</td>') +
+        '<td>' + UI.esc(p.car || '–') + '</td>' +
+        '<td class="num">' + UI.duration(p.onlineMinutes * 60) + '</td>';
       if (isAdmin) {
         html += '<td class="mono">' + UI.esc(p.ip || '') + '</td>' +
-          '<td class="mono">' + UI.esc(p.token || '') + '</td>' +
           '<td class="num">' + UI.num(p.requests) + '</td>' +
-          '<td><button class="small danger" data-kick="' + UI.esc(p.personaId) + '">kick</button></td>';
+          '<td class="actions"><button class="btn danger sm" data-kick="' + UI.esc(p.personaId) + '">kick</button></td>';
+      } else {
+        html += '<td class="num">' + UI.duration(p.idleSeconds) + '</td>';
       }
       html += '</tr>';
     }
     body.innerHTML = html;
-    var empty = document.getElementById('playersEmpty');
+    var empty = $('playersEmpty');
     if (empty) empty.style.display = shown === 0 ? '' : 'none';
-    var table = document.getElementById('playersTable');
+    var table = $('playersTable');
     if (table) table.style.display = shown === 0 ? 'none' : '';
     UI.setText('playerCount', shown + ' / ' + players.length);
 
-    // sound on join/leave
-    var count = players.length;
     if (state.lastOnlineCount >= 0) {
-      if (count > state.lastOnlineCount) Sound.play('join');
-      else if (count < state.lastOnlineCount) Sound.play('leave');
+      if (players.length > state.lastOnlineCount) Sound.play('join');
+      else if (players.length < state.lastOnlineCount) Sound.play('leave');
     }
-    state.lastOnlineCount = count;
-    state.lastOnline = seen;
+    state.lastOnlineCount = players.length;
 
-    if (isAdmin) wireKickButtons();
+    if (isAdmin) wireKick();
   }
 
-  function wireKickButtons() {
-    var buttons = document.querySelectorAll('[data-kick]');
-    for (var i = 0; i < buttons.length; i++) {
-      buttons[i].onclick = function () {
+  function wireKick() {
+    var btns = document.querySelectorAll('[data-kick]');
+    for (var i = 0; i < btns.length; i++) {
+      btns[i].onclick = function () {
         var id = this.getAttribute('data-kick');
-        var reason = global.prompt('Kick persona ' + id + '.\nReason:', 'admin kick');
+        var reason = global.prompt('Кикнуть персонажа ' + id + '.\nПричина:', 'admin kick');
         if (reason === null) return;
         UI.api('/api/admin/kick', { method: 'POST', token: state.token, body: { personaId: Number(id), reason: reason } })
-          .then(function () { UI.toast('kicked ' + id, 'ok'); Sound.play('kick'); refreshAll(); })
-          .catch(function (e) { UI.toast('kick failed: ' + e.message, 'err'); handleAuth(e); });
+          .then(function () { UI.toast('кик ' + id, 'ok'); Sound.play('kick'); refreshAll(); })
+          .catch(function (e) { authFail(e); UI.toast('кик не удался: ' + e.message, 'err'); });
       };
     }
   }
 
+  var FEED_ICON = {
+    start: 'fa-play', kick: 'fa-ban', announce: 'fa-comment', timeout: 'fa-clock',
+    chat: 'fa-comment', admin: 'fa-user-shield', info: 'fa-circle-info'
+  };
+  var FEED_CLASS = {
+    start: 't-group', kick: 't-kick', announce: 't-chat', timeout: 't-leave',
+    chat: 't-chat', admin: 't-group', info: 't-join'
+  };
+
   function renderFeed(data) {
-    var list = document.getElementById('feedList');
+    var list = $('feedList');
     if (!list) return;
     var items = (data && data.events) || [];
     if (!items.length) return;
+    if (state.lastFeedId === 0 && list.firstChild && list.firstChild.className === 'empty small') list.innerHTML = '';
 
+    var fresh = 0;
     var frag = document.createDocumentFragment();
-    var newOnes = 0;
     for (var i = 0; i < items.length; i++) {
       var f = items[i];
       if (f.id <= state.lastFeedId) continue;
-      newOnes++;
-      var li = UI.el('li');
-      li.appendChild(UI.el('span', 't', UI.timeOf(f.utc)));
-      var mid = UI.el('span');
-      mid.innerHTML = '<span class="chip ' + feedClass(f.kind) + '">' + UI.esc(f.kind) + '</span> ' + UI.esc(f.text);
-      li.appendChild(mid);
-      li.appendChild(UI.el('span', 'who', f.persona || ''));
-      frag.insertBefore(li, frag.firstChild);
+      fresh++;
+      var row = UI.el('div', 'li ' + (FEED_CLASS[f.kind] || 't-join'));
+      row.appendChild(UI.el('i', 'fas ' + (FEED_ICON[f.kind] || 'fa-circle-info') + ' ico'));
+      var txt = UI.el('div', 'txt');
+      txt.appendChild(UI.el('b', null, f.text));
+      txt.appendChild(UI.el('small', null, (f.persona || 'server') + ' · ' + UI.timeOf(f.utc)));
+      row.appendChild(txt);
+      frag.insertBefore(row, frag.firstChild);
     }
-    if (newOnes > 0) {
+    if (fresh) {
       list.insertBefore(frag, list.firstChild);
       while (list.children.length > 80) list.removeChild(list.lastChild);
       if (!state.firstLoad) {
-        var lastKind = items[items.length - 1].kind;
-        Sound.play(lastKind === 'chat' ? 'message' : lastKind === 'kick' ? 'kick' : 'notify');
+        var k = items[items.length - 1].kind;
+        Sound.play(k === 'chat' ? 'message' : k === 'kick' ? 'kick' : 'notify');
       }
     }
-    state.lastFeedId = data.last || state.lastFeedId;
-  }
-
-  function feedClass(kind) {
-    if (kind === 'start') return 'ok';
-    if (kind === 'kick') return 'err';
-    if (kind === 'announce') return 'blue';
-    if (kind === 'timeout') return 'warn';
-    return '';
+    state.lastFeedId = data['last'] || state.lastFeedId;
+    UI.setText('feedCount', String(list.children.length));
   }
 
   function renderRelay(data) {
-    var body = document.getElementById('relayBody');
+    var body = $('relayBody');
     if (!body) return;
     var rooms = (data && data.rooms) || [];
     var html = '';
     for (var i = 0; i < rooms.length; i++) {
       var r = rooms[i];
-      html += '<tr><td><b>' + UI.esc(r.name) + '</b></td>' +
+      html += '<tr><td class="name">' + UI.esc(r.name) + '</td>' +
         '<td class="num">' + UI.num(r.clients) + '</td>' +
         '<td class="num">' + UI.num(r.packetsIn) + ' / ' + UI.num(r.packetsOut) + '</td>' +
-        '<td class="num">' + UI.bytes(r.bytesIn) + ' / ' + UI.bytes(r.bytesOut) + '</td>' +
-        '<td class="mono">' + (isAdmin ? memberList(r.members) : '') + '</td></tr>';
+        '<td class="num">' + UI.bytes(r.bytesIn) + ' / ' + UI.bytes(r.bytesOut) + '</td>';
+      if (isAdmin) html += '<td class="mono">' + members(r.members) + '</td>';
+      html += '</tr>';
     }
     body.innerHTML = html;
-    var empty = document.getElementById('relayEmpty');
-    if (empty) empty.style.display = rooms.length ? 'none' : '';
-    var table = document.getElementById('relayTable');
-    if (table) table.style.display = rooms.length ? '' : 'none';
-    UI.setText('relaySummary', (data && data.enabled ? 'relay on port ' + data.port : 'relay disabled') +
-      ' - ' + UI.bytes(data ? data.bytesIn : 0) + ' in / ' + UI.bytes(data ? data.bytesOut : 0) + ' out');
+    if ($('relayEmpty')) $('relayEmpty').style.display = rooms.length ? 'none' : '';
+    if ($('relayTable')) $('relayTable').style.display = rooms.length ? '' : 'none';
+    UI.setText('relaySummary', (data && data.enabled ? 'udp ' + data.port : 'off') +
+      ' · ↓' + UI.bytes(data ? data.bytesIn : 0));
   }
 
-  function memberList(members) {
-    if (!members || !members.length) return '';
+  function members(list) {
+    if (!list || !list.length) return '';
     var out = [];
-    for (var i = 0; i < members.length; i++) {
-      var m = members[i];
-      out.push((m.hairpin ? '* ' : '') + m.endpoint + ' (#' + m.personaId + ')');
+    for (var i = 0; i < list.length; i++) {
+      out.push((list[i].hairpin ? '* ' : '') + list[i].endpoint + ' (#' + list[i].personaId + ')');
     }
     return UI.esc(out.join(', '));
   }
 
   // ---------------------------------------------------------------- fetching
 
-  function handleAuth(e) {
-    if (e && e.status === 401) {
-      showLogin(true);
-      UI.toast('admin token required', 'warn');
-    }
+  function authFail(e) {
+    if (e && e.status === 401) { showGate(true); UI.toast('нужен admin token', 'warn'); }
   }
 
   function refreshAll() {
-    UI.api('/api/status').then(function (s) {
-      renderStatus(s);
-      if (isAdmin) maybeLoadAccounts();
-    }).catch(function (e) {
-      var dot = document.getElementById('connDot');
-      if (dot) { dot.className = 'dot'; dot.title = 'server unreachable'; }
-      if (state.firstLoad) UI.toast('server API unreachable: ' + e.message, 'err');
+    UI.api('/api/status').then(renderStatus).catch(function (e) {
+      var pill = $('connPill');
+      if (pill) { pill.className = 'conn-pill bad'; UI.setText('connText', 'нет связи'); }
+      if (state.firstLoad) UI.toast('API недоступен: ' + e.message, 'err');
     });
-
     UI.api('/api/players').then(renderPlayers).catch(function () { });
     UI.api('/api/feed?since=' + state.lastFeedId).then(renderFeed).catch(function () { });
     UI.api('/api/relay').then(renderRelay).catch(function () { });
-
-    if (isAdmin) {
-      if (state.token) loadLogs();
+    if (isAdmin && state.token) {
+      if (currentTab() === 'logs') loadLogs();
+      if (currentTab() === 'accounts') loadAccounts(false);
     }
     state.firstLoad = false;
   }
 
+  function currentTab() {
+    var t = document.querySelector('.tab.active');
+    return t ? t.getAttribute('data-tab') : '';
+  }
+
   // ------------------------------------------------------------------- admin
 
-  function showLogin(show) {
-    var card = document.getElementById('adminLogin');
-    if (card) card.classList.toggle('hidden', !show);
-    var bar = document.getElementById('adminBar');
-    if (bar) bar.classList.toggle('hidden', show);
+  function showGate(show) {
+    var gate = $('authGate');
+    if (gate) gate.hidden = !show;
+    if (show) { var i = $('authToken'); if (i) setTimeout(function () { i.focus(); }, 50); }
   }
 
   function applyToken() {
-    var input = document.getElementById('adminToken');
+    var input = $('authToken');
     var value = input ? input.value.trim() : '';
-    if (!value) { UI.toast('enter the admin token from config.ini', 'warn'); return; }
+    if (!value) { UI.toast('введите токен из config.ini', 'warn'); return; }
     UI.api('/api/admin/session', { token: value }).then(function () {
       saveToken(value);
-      showLogin(false);
-      UI.toast('admin token accepted', 'ok');
+      showGate(false);
+      UI.toast('токен принят', 'ok');
       Sound.play('connect');
       loadAccounts(true);
-      loadLogs();
+      refreshAll();
     }).catch(function (e) {
-      UI.toast('token rejected: ' + e.message, 'err');
+      UI.setText('authError', 'Неверный токен (' + e.message + ')');
+      UI.toast('токен отклонён', 'err');
       Sound.play('error');
     });
   }
 
-  function maybeLoadAccounts() {
-    var tab = document.querySelector('[data-tab="accounts"]');
-    if (!tab) return;
-    if (tab.classList.contains('active')) loadAccounts(false);
-  }
-
-  var accountsCache = 0;
-
   function loadAccounts(force) {
-    if (!state.token) { showLogin(true); return; }
+    if (!state.token) { showGate(true); return; }
     var now = Date.now();
-    if (!force && now - accountsCache < 5000) return;
-    accountsCache = now;
+    if (!force && now - state.accountsAt < 5000) return;
+    state.accountsAt = now;
     UI.api('/api/admin/accounts', { token: state.token }).then(function (data) {
       var list = (data && data.accounts) || [];
       var html = '';
@@ -342,41 +348,40 @@
         var personas = '';
         for (var k = 0; k < (a.personas || []).length; k++) {
           var p = a.personas[k];
-          personas += '<div class="small"><b>' + UI.esc(p.name) + '</b> #' + p.id +
-            ' - lvl ' + p.level + ', ' + UI.num(p.cash) + ' cash, ' + p.cars + ' cars ' +
-            '<button class="small" data-cash="' + p.id + '">+100k</button></div>';
+          personas += '<div class="tiny">' + UI.esc(p.name) + ' <span class="muted">#' + p.id +
+            ' · lvl ' + p.level + ' · ' + UI.num(p.cash) + ' cash · ' + p.cars + ' машин</span> ' +
+            '<button class="btn ghost sm" data-cash="' + p.id + '">+100k</button></div>';
         }
         html += '<tr><td class="mono">' + a.id + '</td>' +
-          '<td>' + UI.esc(a.name) + (a.banned ? ' <span class="chip err">banned</span>' : '') + '</td>' +
-          '<td>' + UI.esc(a.lastLoginUtc || '') + '</td>' +
+          '<td class="name">' + UI.esc(a.name) + (a.banned ? ' <span class="tag err">ban</span>' : '') + '</td>' +
+          '<td class="mono">' + UI.esc(a.lastLoginUtc || '') + '</td>' +
           '<td>' + personas + '</td>' +
-          '<td class="nowrap">' +
+          '<td class="actions">' +
           (a.banned
-            ? '<button class="small" data-account="' + a.id + '" data-action="unban">unban</button>'
-            : '<button class="small danger" data-account="' + a.id + '" data-action="ban">ban</button>') +
+            ? '<button class="btn ghost sm" data-account="' + a.id + '" data-action="unban">unban</button>'
+            : '<button class="btn danger sm" data-account="' + a.id + '" data-action="ban">ban</button>') +
           '</td></tr>';
       }
-      var body = document.getElementById('accountsBody');
-      if (body) body.innerHTML = html;
-      UI.setText('accountsCount', list.length + '');
-      wireAccountButtons();
-      showLogin(false);
+      if ($('accountsBody')) $('accountsBody').innerHTML = html;
+      UI.setText('accountsCount', String(list.length));
+      wireAccount();
+      showGate(false);
     }).catch(function (e) {
-      handleAuth(e);
-      if (e.status !== 401) UI.toast('accounts: ' + e.message, 'err');
+      authFail(e);
+      if (e.status !== 401) UI.toast('аккаунты: ' + e.message, 'err');
     });
   }
 
-  function wireAccountButtons() {
-    var btns = document.querySelectorAll('[data-account]');
+  function wireAccount() {
     var i;
+    var btns = document.querySelectorAll('[data-account]');
     for (i = 0; i < btns.length; i++) {
       btns[i].onclick = function () {
         var id = Number(this.getAttribute('data-account'));
         var action = this.getAttribute('data-action');
         UI.api('/api/admin/account', { method: 'POST', token: state.token, body: { accountId: id, action: action } })
-          .then(function () { UI.toast('account ' + id + ': ' + action, 'ok'); loadAccounts(true); Sound.play('notify'); })
-          .catch(function (e) { handleAuth(e); UI.toast('failed: ' + e.message, 'err'); });
+          .then(function () { UI.toast('аккаунт ' + id + ': ' + action, 'ok'); loadAccounts(true); Sound.play('notify'); })
+          .catch(function (e) { authFail(e); UI.toast('ошибка: ' + e.message, 'err'); });
       };
     }
     var cash = document.querySelectorAll('[data-cash]');
@@ -385,113 +390,103 @@
         var pid = Number(this.getAttribute('data-cash'));
         UI.api('/api/admin/account', {
           method: 'POST', token: state.token,
-          body: { accountId: 0, personaId: pid, action: 'cash', delta: 100000 }
-        }).catch(function (e) {
-          // accountId is required by the endpoint; fall back to a direct persona lookup through status
-          handleAuth(e);
-          UI.toast('cash: ' + e.message, 'err');
-        }).then(function () { loadAccounts(true); });
+          body: { personaId: pid, action: 'cash', delta: 100000 }
+        }).then(function () { UI.toast('+100000 персонажу #' + pid, 'ok'); loadAccounts(true); Sound.play('reward'); })
+          .catch(function (e) { authFail(e); UI.toast('ошибка: ' + e.message, 'err'); });
       };
     }
   }
 
   function loadLogs() {
     if (!state.token || state.logsPaused) return;
-    var url = '/api/admin/logs?since=' + state.logsSince + '&limit=300';
+    var url = '/api/admin/logs?since=' + state.logsSince + '&limit=250';
     if (state.logsFilter) url += '&level=' + encodeURIComponent(state.logsFilter);
     UI.api(url, { token: state.token }).then(function (data) {
-      var lines = (data && data.lines) || [];
-      var view = document.getElementById('logsView');
+      var view = $('logsView');
       if (!view) return;
-      var html = view.innerHTML;
+      var lines = (data && data.lines) || [];
+      if (!lines.length) return;
+      if (view.firstChild && view.firstChild.className === 'log-empty') view.innerHTML = '';
+      var frag = document.createDocumentFragment();
       for (var i = 0; i < lines.length; i++) {
         var l = lines[i];
-        var cls = 'lvl-' + String(l.level || 'I').charAt(0);
-        html += '<div class="' + cls + '">' + UI.esc(UI.timeOf(l.utc) + ' [' + l.level + '] ' + l.cat + ' ' + l.msg) + '</div>';
+        var row = UI.el('div', 'log-line lv-' + String(l.level || 'I').charAt(0));
+        row.appendChild(UI.el('span', 't', UI.timeOf(l.utc)));
+        row.appendChild(UI.el('span', 'cat', l.cat));
+        row.appendChild(UI.el('span', 'm', l.msg));
+        frag.appendChild(row);
         state.logsSince = l.seq;
       }
-      if (lines.length) {
-        view.innerHTML = html;
-        view.scrollTop = view.scrollHeight;
-        var nodes = view.children;
-        while (nodes.length > 800) view.removeChild(view.firstChild);
-      }
-    }).catch(function (e) { handleAuth(e); });
+      view.appendChild(frag);
+      view.scrollTop = view.scrollHeight;
+      while (view.children.length > 700) view.removeChild(view.firstChild);
+    }).catch(function (e) { authFail(e); });
   }
 
   function announce() {
-    var input = document.getElementById('announceText');
-    if (!input) return;
-    var text = input.value.trim();
-    if (!text) { UI.toast('announcement is empty', 'warn'); return; }
+    var input = $('announceText');
+    var text = input ? input.value.trim() : '';
+    if (!text) { UI.toast('объявление пустое', 'warn'); return; }
     UI.api('/api/admin/announce', { method: 'POST', token: state.token, body: { text: text } })
-      .then(function (r) { UI.toast('sent to ' + (r.sent || 0) + ' client(s)', 'ok'); input.value = ''; Sound.play('message'); })
-      .catch(function (e) { handleAuth(e); UI.toast('announce failed: ' + e.message, 'err'); });
+      .then(function (r) { UI.toast('отправлено ' + (r.sent || 0) + ' клиентам', 'ok'); input.value = ''; Sound.play('message'); })
+      .catch(function (e) { authFail(e); UI.toast('не отправлено: ' + e.message, 'err'); });
   }
 
   // -------------------------------------------------------------------- wire
 
-  function wireToolbar() {
+  function wire() {
     UI.on('btnTheme', 'click', UI.nextTheme);
     UI.on('btnSound', 'click', function () {
       var on = !Sound.isEnabled();
       Sound.setEnabled(on);
       UI.Store.set('dpt.sound', on ? '1' : '0');
-      syncSoundButton();
+      syncSound();
       if (on) Sound.play('notify');
     });
-    UI.on('btnRefresh', 'click', function () {
-      UI.toast('refreshed', '');
-      refreshAll();
-      if (isAdmin) { loadAccounts(true); loadLogs(); }
-      Sound.click();
-    });
-    var search = document.getElementById('search');
+    var doRefresh = function () { UI.toast('обновлено', ''); refreshAll(); Sound.click(); };
+    UI.on('btnRefresh', 'click', doRefresh);
+    UI.on('btnRefresh2', 'click', doRefresh);
+
+    var search = $('search');
     if (search) {
       search.addEventListener('input', UI.debounce(function () {
         UI.api('/api/players').then(renderPlayers).catch(function () { });
       }, 150), false);
     }
-  }
 
-  function wireAdmin() {
     if (!isAdmin) return;
-    UI.on('btnLogin', 'click', applyToken);
-    var tokenInput = document.getElementById('adminToken');
-    if (tokenInput) {
-      tokenInput.addEventListener('keydown', function (e) { if (e.keyCode === 13) applyToken(); }, false);
-    }
-    var logout = document.getElementById('btnLogout');
-    if (logout) {
-      logout.onclick = function () { saveToken(''); showLogin(true); UI.toast('token forgotten', ''); };
-    }
+
+    UI.on('authForm', 'submit', function (e) { e.preventDefault(); applyToken(); });
+    UI.on('btnLogout', 'click', function () { saveToken(''); showGate(true); UI.toast('токен забыт', ''); });
     UI.on('btnAnnounce', 'click', announce);
     UI.on('btnSave', 'click', function () {
       UI.api('/api/admin/save', { method: 'POST', token: state.token })
-        .then(function () { UI.toast('state saved', 'ok'); })
-        .catch(function (e) { handleAuth(e); UI.toast('save failed', 'err'); });
+        .then(function () { UI.toast('состояние сохранено', 'ok'); })
+        .catch(function (e) { authFail(e); UI.toast('save не удался', 'err'); });
     });
     UI.on('btnReload', 'click', function () {
       UI.api('/api/admin/reload', { method: 'POST', token: state.token })
-        .then(function () { UI.toast('profiles reloaded', 'ok'); refreshAll(); })
-        .catch(function (e) { handleAuth(e); UI.toast('reload failed', 'err'); });
+        .then(function () { UI.toast('профили перечитаны', 'ok'); refreshAll(); })
+        .catch(function (e) { authFail(e); UI.toast('reload не удался', 'err'); });
     });
     UI.on('btnLogsPause', 'click', function () {
       state.logsPaused = !state.logsPaused;
-      this.textContent = state.logsPaused ? 'resume' : 'pause';
+      var i = this.querySelector('i');
+      if (i) i.className = 'fas ' + (state.logsPaused ? 'fa-play' : 'fa-pause');
+      this.title = state.logsPaused ? 'Продолжить' : 'Пауза';
     });
-    var level = document.getElementById('logsLevel');
-    if (level) level.addEventListener('change', function () { state.logsFilter = this.value; state.logsSince = 0; }, false);
     UI.on('btnLogsClear', 'click', function () {
-      var v = document.getElementById('logsView');
-      if (v) v.innerHTML = '';
+      var v = $('logsView');
+      if (v) v.innerHTML = '<div class="log-empty">нет записей</div>';
       state.logsSince = 0;
     });
+    var level = $('logsLevel');
+    if (level) level.addEventListener('change', function () { state.logsFilter = this.value; state.logsSince = 0; }, false);
     UI.on('btnShutdown', 'click', function () {
-      if (!global.confirm('Stop the server process?')) return;
+      if (!global.confirm('Остановить сервер?')) return;
       UI.api('/api/admin/shutdown', { method: 'POST', token: state.token })
-        .then(function () { UI.toast('shutdown requested - the window will close', 'warn'); })
-        .catch(function (e) { handleAuth(e); });
+        .then(function () { UI.toast('остановка запрошена', 'warn'); })
+        .catch(function (e) { authFail(e); });
     });
   }
 
@@ -499,16 +494,14 @@
     loadPrefs();
     loadToken();
     UI.tabs();
-    wireToolbar();
-    wireAdmin();
-    if (isAdmin) showLogin(!state.token);
-    var saved = UI.Store.get('dpt.tab.' + role, 'dashboard');
-    UI.selectTab(saved);
+    wire();
+    if (isAdmin) showGate(!state.token);
+    UI.selectTab(UI.Store.get('dpt.tab.' + role, 'dashboard'));
     refreshAll();
     UI.poll(function () {
       if (document.hidden) return;
       refreshAll();
-    }, Math.max(2000, state.refreshMs));
+    }, 3000);
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, false);

@@ -139,7 +139,7 @@ Check 'public players hide ip' (-not ($players -match '"ip":'))
 Check 'public players hide token' (-not ($players -match '"token":'))
 Check 'public players list the probe persona' ($players -match [regex]::Escape($personaName))
 Check 'public board index.html' ((HttpText "$Web/") -match 'DPT.Server')
-Check 'public board admin.html is reachable' ((HttpText "$Web/admin.html") -match 'Admin sign in')
+Check 'public board admin.html is reachable' ((HttpText "$Web/admin.html") -match 'auth-gate')
 
 Write-Host ''
 Write-Host '=== web: admin board ===' -ForegroundColor Cyan

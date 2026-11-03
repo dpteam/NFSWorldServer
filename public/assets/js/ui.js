@@ -1,4 +1,4 @@
-/* =========================================================================
+﻿/* =========================================================================
    DPT.Server - shared UI helpers (ES5, no dependencies)
    ========================================================================= */
 (function (global) {
@@ -26,7 +26,7 @@
 
   function applyTheme(theme) {
     if (THEMES.indexOf(theme) < 0) theme = 'light';
-    document.body.setAttribute('data-theme', theme);
+    document.documentElement.setAttribute('data-theme', theme);
     Store.set('dpt.theme', theme);
     var btn = document.getElementById('btnTheme');
     if (btn) {
@@ -37,7 +37,7 @@
   }
 
   function nextTheme() {
-    var cur = document.body.getAttribute('data-theme') || 'light';
+    var cur = document.documentElement.getAttribute('data-theme') || 'light';
     var idx = THEMES.indexOf(cur);
     applyTheme(THEMES[(idx + 1) % THEMES.length]);
     if (global.Sound) global.Sound.click();
@@ -61,14 +61,16 @@
     var host = document.getElementById('toasts');
     if (!host) return;
     var t = el('div', 'toast ' + (kind || ''));
-    t.textContent = text;
+    var icon = el('i', 'fas ' + (kind === 'ok' ? 'fa-check' : kind === 'err' ? 'fa-xmark' : kind === 'warn' ? 'fa-circle-info' : 'fa-circle-info'));
+    var body = el('div');
+    body.appendChild(el('b', null, text));
+    t.appendChild(icon);
+    t.appendChild(body);
     host.appendChild(t);
     var life = ms || 4200;
     setTimeout(function () {
-      t.style.transition = 'opacity .25s ease, transform .25s ease';
-      t.style.opacity = '0';
-      t.style.transform = 'translateY(6px)';
-      setTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); }, 260);
+      t.classList.add('out');
+      setTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); }, 240);
     }, life);
     while (host.children.length > 5) host.removeChild(host.firstChild);
   }

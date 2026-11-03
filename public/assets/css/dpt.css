@@ -1,0 +1,137 @@
+/* =========================================================================
+   DPT.Server - project specifics on top of the AdHoc visual language
+   (app.css is the shared design system; this file only adds what the
+   NFS World boards need: panel switching, service chips, tables, auth gate).
+   ========================================================================= */
+
+/* ---------------------------------------------------------- tab panels */
+
+[data-panel] { display: none; }
+[data-panel].active { display: block; }
+
+/* six stat cards need a little more room than the AdHoc five */
+.stat-grid { grid-template-columns: repeat(auto-fit, minmax(184px, 1fr)); }
+.stat-label { letter-spacing: .3px; }
+@media (max-width: 1320px) {
+  .stat-sub { display: none; }
+}
+@media (max-width: 900px) {
+  .stat-sub { display: block; }
+}
+
+.columns { align-items: flex-start; }
+.col-main > [data-panel].active,
+.col-side > [data-panel].active { display: flex; flex-direction: column; gap: 12px; }
+
+/* --------------------------------------------------------- service chips */
+
+.svc-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.svc-chips .chip { font-size: 10.5px; }
+.svc-chips .chip.ok { color: var(--ok); border-color: rgba(47, 143, 87, .35); background: rgba(47, 143, 87, .10); }
+.svc-chips .chip.bad { color: var(--err); border-color: rgba(185, 58, 44, .35); background: rgba(185, 58, 44, .10); }
+
+/* --------------------------------------------------------------- tables */
+
+table.players { width: 100%; border-collapse: collapse; }
+table.players th {
+  text-align: left;
+  font-size: 10px;
+  letter-spacing: .7px;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 600;
+  padding: 6px 8px;
+  background: var(--panel-2);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+table.players td {
+  padding: 6px 8px;
+  border-top: 1px solid var(--border);
+  font-size: 11.5px;
+  vertical-align: middle;
+}
+table.players tr:first-child td { border-top: 0; }
+table.players tr:hover td { background: var(--accent-soft); }
+table.players td.num, table.players th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+table.players td.mono { font-family: var(--font-mono); font-size: 10.5px; color: var(--muted); }
+table.players td.name { font-weight: 600; }
+table.players td.actions { text-align: right; width: 1%; white-space: nowrap; }
+table.players .sub { display: block; font-size: 10px; color: var(--muted); font-weight: 400; }
+
+.table-scroll { max-height: 460px; overflow: auto; }
+.table-scroll table.players th { position: sticky; top: 0; z-index: 1; }
+
+/* ------------------------------------------------------------------ feed */
+
+.feed { max-height: 340px; overflow: auto; }
+.feed .li { border-radius: var(--radius-xs); }
+
+/* ------------------------------------------------------------------- log */
+
+.log-view { height: 320px; }
+
+/* ------------------------------------------------------------- auth gate */
+
+.auth-gate {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: var(--scrim);
+  backdrop-filter: blur(3px);
+}
+.auth-gate[hidden] { display: none; }
+
+.auth-card {
+  width: min(420px, 100%);
+  background: var(--panel);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-hi), var(--inset);
+  padding: 18px;
+}
+.auth-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.auth-brand i { color: var(--accent); }
+.auth-brand span {
+  font-size: 10px;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1px 6px;
+}
+.auth-card p { margin: 0 0 10px; font-size: 11.5px; color: var(--muted); line-height: 1.5; }
+.auth-card code { font-family: var(--font-mono); font-size: 10.5px; }
+.auth-card input { width: 100%; margin-bottom: 10px; }
+.auth-card .btn { width: 100%; justify-content: center; }
+.auth-error { min-height: 16px; margin-top: 8px; font-size: 11px; color: var(--err); }
+.auth-card small { display: block; margin-top: 10px; font-size: 10.5px; color: var(--muted); line-height: 1.5; }
+
+/* --------------------------------------------------------- small helpers */
+
+.panel-body.pad-0 { padding: 0; }
+.row-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.grow-1 { flex: 1; }
+.mt-8 { margin-top: 8px; }
+.muted { color: var(--muted); }
+.stack { display: flex; flex-direction: column; gap: 8px; }
+.inline-kv { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 11px; color: var(--muted); }
+.inline-kv b { color: var(--text-soft); font-family: var(--font-mono); font-weight: 600; }
+
+/* --------------------------------------------------------------------- */
+
+@media (max-width: 900px) {
+  .columns { flex-direction: column; }
+  .col-main, .col-side { width: 100%; }
+}
