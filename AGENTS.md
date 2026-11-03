@@ -109,6 +109,9 @@ powershell -File tools\ci-test.ps1     :: всё сразу
 | Клиент: «Critical Error: Out of memory» | **сначала проверьте, нет ли RDP**: в RDP-сессии есть только `Microsoft Remote Display Adapter`, и клиент падает на инициализации D3D. Тестировать в консольной сессии (или через AnyDesk к консоли) |
 | Клиент: «No DirectX device found» | то же самое — нет D3D-устройства, протокол не при чём |
 | Клиент живёт 1-4 запроса и умирает с «Out of memory» | **gzip**. Клиент присылает `Accept-Encoding: gzip` и потом **всегда** распаковывает тело. Несжатый ответ (или `Content-Encoding: gzip` на несжатых данных) = падение. `EngineServer` жмёт любой непустой текстовый ответ через `HttpCompression.GzipAlways`, без порога по размеру. Jetty делает так же (187 Б → 155 Б) |
+| Клиент проходит boot и висит 2 минуты, потом `exitCode=-6` без диалога | три независимые причины, проверять по порядку: (1) `Session/GetChatInfo` с неподставленным `{xmppIp}` — клиент висит на резолве; (2) мёртвые абсолютные URL из эталонных данных (`10.100.15.202`, `world.needforspeed.com`, `cdn.world.needforspeed.com`) — `engine.rewriteUrls=true` их переписывает; (3) запросы OCSP/CRL к `ts-ocsp.ws.symantec.com` / `ts-crl.ws.symantec.com` — в hosts на 127.0.0.1 |
+| Клиент падает в `D3DX9_43.dll` / чёрный экран | 32-битный `nfsw.exe` не имел флага **Large Address Aware** (только 2 ГБ) — выставить `DllCharacteristics |= 0x20` (4GB-патч); помогает также `ProcessorAffinity = 0xF` (на 32 ядрах клиент 2016 года падает), `dgVoodoo2` (`d3d9.dll` + `FullScreenMode=false`) или `DXVK d3d9.dll` |
+| Игра под RDP / на HDMI-заглушке | нет нормального D3D-устройства и EDID: `No DirectX device found`, чёрный экран. Тестировать на реальном мониторе; заглушка из майнинг-фермы не годится |
 
 ## Definition of done
 
