@@ -102,6 +102,14 @@ Check 'AuthenticateUserByToken rejects an unknown token' ($tokenResp -match 'INV
 $goodToken = HttpText "$engine/User/AuthenticateUserByToken" 'POST' ('<Token><Value>' + $loginToken + '</Value></Token>')
 Check 'AuthenticateUserByToken accepts a live token' ($goodToken -match '<LoginToken>[0-9a-fA-F\-]{20,}</LoginToken>')
 
+# The chat server address must never come from the profile verbatim: a static
+# "{xmppIp}" or a reference host leaves the client on a black screen for minutes
+# and then SERVERERROR_FATAL_ERRORCODE_13.
+$chatInfo = HttpText "$engine/Session/GetChatInfo"
+Check 'chat info has no unresolved placeholder' (-not ($chatInfo -match '\{[a-zA-Z]+\}')) $chatInfo
+Check 'chat info carries a port' ($chatInfo -match '<port>\d+</port>') $chatInfo
+Check 'chat info points at the xmpp listener' ($chatInfo -match '<ip>(127\.0\.0\.1|localhost|\d+\.\d+\.\d+\.\d+)</ip>') $chatInfo
+
 $permXml = '<GetPermanentSessionRequest><machineID>PROBE-MACHINE</machineID></GetPermanentSessionRequest>'
 $perm = HttpText "$engine/User/GetPermanentSession" 'POST' $permXml @{ securityToken = $loginToken }
 Check 'GetPermanentSession returns UserInfo' ($perm -match '<UserInfo')

@@ -228,8 +228,7 @@ namespace Dpt.NfsWorld.Engine
                 }
                 if (lower == "/session/getchatinfo")
                 {
-                    if (!ServeStatic(req, res, profile, rel))
-                        SendXml(res, "<ChatInfo><Channel>channel.en__1</Channel><Room>1</Room></ChatInfo>");
+                    HandleChatInfo(req, res, profile, rel);
                     return;
                 }
                 if (lower == "/getrebroadcasters")
@@ -408,6 +407,75 @@ namespace Dpt.NfsWorld.Engine
             Log.Info("AUTH", "token login ok: " + account.Username + " (#" + account.Id + ") ip=" + req.RemoteIp);
             SendXml(res, "<LoginStatusVO><UserId>" + account.Id.ToString(CultureInfo.InvariantCulture) +
                          "</UserId><LoginToken>" + Util.EscapeXml(fresh.Token) + "</LoginToken><Description/></LoginStatusVO>");
+        }
+
+        /// <summary>
+        /// Session/GetChatInfo tells the client where EA-Chat lives. Profile files are
+        /// static, so they carry "{xmppIp}" or a hardcoded reference host and no port at
+        /// all - a client that cannot resolve that host sits on a black screen for
+        /// minutes and then reports SERVERERROR_FATAL_ERRORCODE_13. Always rewrite the
+        /// host and the port to this server's real values.
+        /// </summary>
+        private void HandleChatInfo(HttpRequest req, HttpResponse res, ClientProfile profile, string rel)
+        {
+            string text = null;
+            string file = ResolveAnyFile(profile, rel);
+            if (file != null)
+            {
+                try { text = File.ReadAllText(file, Encoding.UTF8); }
+                catch { text = null; }
+            }
+
+            string host = ChatHost(req);
+            string port = _cfg.XmppPort.ToString(CultureInfo.InvariantCulture);
+
+            if (string.IsNullOrEmpty(text))
+            {
+                text = "<chatServer xmlns=\"http://schemas.datacontract.org/2004/07/Victory.TransferObjects.Session\" " +
+                       "xmlns:i=\"http://www.w3.org/2001/XMLSchema-instance\">" +
+                       "<ip>" + Util.EscapeXml(host) + "</ip><port>" + port + "</port><prefix>nfsw</prefix></chatServer>";
+            }
+            else
+            {
+                text = text.Replace("{xmppIp}", host).Replace("{xmppPort}", port)
+                           .Replace("{ip}", host).Replace("{port}", port);
+                text = SetElement(text, "ip", host);
+                text = SetElement(text, "port", port);
+            }
+
+            Log.Proto("ENGINE", "chat info: " + host + ":" + port);
+            SendXml(res, text);
+        }
+
+        /// <summary>Host the client used to reach us, without the port.</summary>
+        private static string ChatHost(HttpRequest req)
+        {
+            string host = req.Header("Host") ?? "";
+            int colon = host.IndexOf(':');
+            if (colon > 0) host = host.Substring(0, colon);
+            host = host.Trim();
+            if (host.Length == 0 || host == "0.0.0.0") return "127.0.0.1";
+            return host;
+        }
+
+        /// <summary>Replace the text of &lt;name&gt;...&lt;/name&gt;, inserting it when absent.</summary>
+        private static string SetElement(string xml, string name, string value)
+        {
+            string open = "<" + name + ">";
+            string close = "</" + name + ">";
+            string replacement = open + Util.EscapeXml(value) + close;
+            int start = xml.IndexOf(open, StringComparison.OrdinalIgnoreCase);
+            if (start < 0) start = xml.IndexOf("<" + name + " ", StringComparison.OrdinalIgnoreCase);
+            if (start >= 0)
+            {
+                int openEnd = xml.IndexOf('>', start);
+                int end = xml.IndexOf(close, StringComparison.OrdinalIgnoreCase);
+                if (openEnd > 0 && end > openEnd)
+                    return xml.Substring(0, start) + replacement + xml.Substring(end + close.Length);
+            }
+            int rootEnd = xml.LastIndexOf("</chatServer>", StringComparison.OrdinalIgnoreCase);
+            if (rootEnd > 0) return xml.Substring(0, rootEnd) + replacement + xml.Substring(rootEnd);
+            return xml;
         }
 
         private void HandleModernAuth(HttpRequest req, HttpResponse res)
