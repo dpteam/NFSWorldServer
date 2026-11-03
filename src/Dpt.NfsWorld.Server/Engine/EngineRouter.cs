@@ -49,6 +49,19 @@ namespace Dpt.NfsWorld.Engine
                     return;
                 }
 
+                // ------------------------------------------ protocol oracle mode
+                // engine.staticOnly=true: answer exactly like the reference pack,
+                // straight from the client profile. Used to find out what a build
+                // really wants before the endpoint is ported into code.
+                if (_cfg.EngineStaticOnly)
+                {
+                    if (ServeStatic(req, res, profile, rel)) return;
+                    Log.Warn("ENGINE", "staticOnly: no file for " + req.Method + " " + rel +
+                                        " (profile " + (profile == null ? "none" : profile.Id) + ")");
+                    SendEmpty(res, 200);
+                    return;
+                }
+
                 // ------------------------------------------------------- account
                 if (lower == "/user/authenticateuser" || lower == "/user/authenticate")
                 {

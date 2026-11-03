@@ -187,6 +187,7 @@ namespace Dpt.NfsWorld.Engine
             TcpClient client = (TcpClient)state;
             HttpConnection conn = null;
             string ip = "0.0.0.0";
+            int served = 0;
             try
             {
                 try { client.NoDelay = true; } catch { }
@@ -208,7 +209,6 @@ namespace Dpt.NfsWorld.Engine
                 conn.RemotePort = ep == null ? 0 : ep.Port;
                 conn.ServerHeader = "DPT.Server";
 
-                int served = 0;
                 while (_running && served < 50)
                 {
                     HttpRequest req;
@@ -288,6 +288,8 @@ namespace Dpt.NfsWorld.Engine
                 if (conn != null) conn.Dispose();
                 else { try { client.Close(); } catch { } }
                 Interlocked.Decrement(ref _inflight);
+                // "client hung up after 1 request" is how a crashing game looks from here
+                if (served > 0) Log.Proto("ENGINE", "< connection closed after " + served + " request(s) from " + ip);
             }
         }
 

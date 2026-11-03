@@ -1,0 +1,12 @@
+<LoginAnnouncementsDefinition xmlns="http://schemas.datacontract.org/2004/07/Victory.DataLayer.Serialization.LoginAnnouncement" xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+    <Announcements>
+        <LoginAnnouncementDefinition>
+            <Context>NotApplicable</Context>
+            <Id>1</Id>
+            <ImageChecksum>-1</ImageChecksum>
+            <ImageUrl>GgMribk.png</ImageUrl>
+            <Type>ImageOnly</Type>
+        </LoginAnnouncementDefinition>
+    </Announcements>
+    <ImagesPath>http://i.imgur.com/</ImagesPath>
+</LoginAnnouncementsDefinition>

@@ -1,0 +1,1 @@
+<HeartBeat xmlns="http://schemas.datacontract.org/2004/07/Victory.DataLayer.Serialization" xmlns:i="http://www.w3.org/2001/XMLSchema-instance"><MetagameFlags>2</MetagameFlags><enabledBitField>0</enabledBitField></HeartBeat>

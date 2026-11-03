@@ -116,29 +116,56 @@ namespace Dpt.NfsWorld.Core
         public static void Info(string category, string format, params object[] args) { Write(LogLevel.Info, category, SafeFormat(format, args)); }
         public static void Debug(string category, string format, params object[] args) { Write(LogLevel.Debug, category, SafeFormat(format, args)); }
 
-        /// <summary>Protocol level log. Gated by logging.protocolTrace.</summary>
+        /// <summary>
+        /// Protocol level log. Gated by logging.protocolTrace only - it deliberately
+        /// ignores logging.level, because "trace on, level=info" is the documented
+        /// setting and used to produce an empty log exactly when it mattered.
+        /// </summary>
         public static void Proto(string category, string format, params object[] args)
         {
             if (!_protocolTrace) return;
-            Write(LogLevel.Debug, category, SafeFormat(format, args));
+            WriteForced(LogLevel.Debug, category, SafeFormat(format, args));
+        }
+
+        /// <summary>Writes regardless of the configured level (protocol trace, fatal).</summary>
+        private static void WriteForced(LogLevel level, string category, string message)
+        {
+            LogEntry e = NewEntry(level, category, message);
+            lock (Sync)
+            {
+                if (_shutdown) return;
+                AddToRing(e);
+            }
+            Emit(e);
         }
 
         public static void Write(LogLevel level, string category, string message)
         {
             if (level > _minLevel) return;
-            LogEntry e = new LogEntry
+            LogEntry e = NewEntry(level, category, message);
+            lock (Sync)
+            {
+                if (_shutdown) return;
+                AddToRing(e);
+            }
+            Emit(e);
+        }
+
+        private static LogEntry NewEntry(LogLevel level, string category, string message)
+        {
+            return new LogEntry
             {
                 Utc = DateTime.UtcNow,
                 Level = level,
                 Category = category == null ? "APP" : category,
-                Message = message == null ? "" : message
+                Message = message == null ? "" : message,
+                Seq = Interlocked.Increment(ref _seq)
             };
-            lock (Sync)
-            {
-                if (_shutdown) return;
-                e.Seq = ++_seq;
-                AddToRing(e);
-            }
+        }
+
+        /// <summary>Hands one entry to Trace (the file listener formats it). No console echo.</summary>
+        private static void Emit(LogEntry e)
+        {
             if (!_configured) return; // pre-configure calls still land in the ring
             try { Trace.WriteLine(Format(e)); }
             catch { }

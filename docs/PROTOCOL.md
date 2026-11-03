@@ -151,6 +151,22 @@ GET /api/status  (без /Engine.svc)   -> {"ok":true, ..., "services":{"engine"
 это проверяет `tools\test-engine.ps1`. Порт доски по соглашению — игровой +1
 (`44600 -> 44601`, оффлайн `44620 -> 44621`).
 
+## Режим «оракул» (`engine.staticOnly`)
+
+Иногда быстрее не угадывать, а отдать клиенту ровно те байты, что отдаёт референсный сервер
+пака, и посмотреть, куда он пойдёт дальше:
+
+```ini
+[engine]
+staticOnly=true
+profile=soapbox-1613
+```
+
+`EngineRouter` в этом режиме не заходит ни в один обработчик: путь `/User/GetPermanentSession`
+превращается в `data/profiles/soapbox-1613/Engine.svc/User/GetPermanentSession.xml`, отсутствующий
+файл — `200` с пустым телом (как делал оригинальный SoapBox), а каждый промах пишется в лог
+(`staticOnly: no file for ...`). Проба лаунчера `/api/*` остаётся рабочей.
+
 ## Ответы и коды
 
 - Успешный XML — `200`, `Content-Type: application/xml; charset=utf-8`.

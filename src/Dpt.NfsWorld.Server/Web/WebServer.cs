@@ -284,11 +284,13 @@ namespace Dpt.NfsWorld.Web
                     Interlocked.Increment(ref _app.TotalRequests);
 
                     string clientIp = EffectiveClientIp(req);
+                    DateTime started = DateTime.UtcNow;
                     if (!RateAllowed(clientIp))
                     {
                         HttpResponse busy = Error(429, "rate limit");
                         busy.Set("Retry-After", "5");
                         conn.WriteResponse(busy, false, false);
+                        Log.Warn("WEB", RoleName + " rate limit: " + clientIp + " " + req.Method + " " + req.Target);
                         break;
                     }
 
@@ -299,6 +301,19 @@ namespace Dpt.NfsWorld.Web
                         Interlocked.Increment(ref _errors);
                         Log.Error("WEB", RoleName + " " + req.Method + " " + req.Target + " failed: " + ex);
                         resp = Error(500, "internal server error");
+                    }
+
+                    // one line per request: board, method, path, status, time, who
+                    if (Log.ProtocolTrace)
+                    {
+                        long ms = (long)(DateTime.UtcNow - started).TotalMilliseconds;
+                        Log.Proto("WEB", RoleName.ToUpperInvariant() + " " + req.Method + " " + req.Target +
+                                          " -> " + resp.Status + " " + ms + "ms | " + clientIp +
+                                          " | " + Util.Truncate(resp.ContentType, 40) +
+                                          " | ua=" + Util.Truncate(req.Header("User-Agent") ?? "", 40));
+                        if (resp.Body != null && resp.Body.Length > 0 && resp.Body.Length <= 2048)
+                            Log.Proto("WEB", "    resp " + resp.Body.Length + "B: " +
+                                             Util.Truncate(System.Text.Encoding.UTF8.GetString(resp.Body), 300));
                     }
 
                     bool keep = req.KeepAlive && served < 100;

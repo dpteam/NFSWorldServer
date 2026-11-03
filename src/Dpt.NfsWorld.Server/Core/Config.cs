@@ -36,6 +36,11 @@ namespace Dpt.NfsWorld.Core
         public int MaxSessionsPerIp = 32;
         public bool StaticFallback = true;
         public bool LenientUnhandled = true;
+        /// <summary>
+        /// Protocol oracle: answer Engine.svc only from the client profile tree, so a
+        /// reference pack can be replayed byte for byte while endpoints are ported.
+        /// </summary>
+        public bool EngineStaticOnly = false;
         public long RewardCashPerEvent;
         public long RewardRepPerEvent;
         public long StartingCash = 100000;
@@ -254,6 +259,7 @@ namespace Dpt.NfsWorld.Core
             MaxSessionsPerIp = GetInt("engine.maxSessionsPerIp", MaxSessionsPerIp);
             StaticFallback = GetBool("engine.staticFallback", StaticFallback);
             LenientUnhandled = GetBool("engine.lenientUnhandled", LenientUnhandled);
+            EngineStaticOnly = GetBool("engine.staticOnly", EngineStaticOnly);
             RewardCashPerEvent = GetLong("engine.rewardCashPerEvent", RewardCashPerEvent);
             RewardRepPerEvent = GetLong("engine.rewardRepPerEvent", RewardRepPerEvent);
             StartingCash = GetLong("engine.startingCash", StartingCash);
@@ -441,6 +447,7 @@ namespace Dpt.NfsWorld.Core
                 sb.AppendLine("maxSessionsPerIp=" + MaxSessionsPerIp.ToString(CultureInfo.InvariantCulture));
                 sb.AppendLine("staticFallback=" + Bool(StaticFallback));
                 sb.AppendLine("lenientUnhandled=" + Bool(LenientUnhandled));
+                sb.AppendLine("staticOnly=" + Bool(EngineStaticOnly));
                 sb.AppendLine("rewardCashPerEvent=" + RewardCashPerEvent.ToString(CultureInfo.InvariantCulture));
                 sb.AppendLine("rewardRepPerEvent=" + RewardRepPerEvent.ToString(CultureInfo.InvariantCulture));
                 sb.AppendLine("startingCash=" + StartingCash.ToString(CultureInfo.InvariantCulture));

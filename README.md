@@ -37,6 +37,10 @@ relay    44610  <-- UDP-релей для NAT hairpin / CGNAT             (UDP)
   (`/soapbox/Engine.svc`, `/nfsw/Engine.svc`), по build в `User-Agent`, по наличию файла.
 - Отличия сборок (регистр тегов persona, namespace, доп. поля) лежат в `templates/*.xml`,
   а не в коде.
+- **Режим «оракул»**: `engine.staticOnly=true` + `engine.profile=<id>` — сервер отвечает на
+  Engine.svc **только файлами профиля**, байт-в-байт как референсный сервер пака. Это способ
+  узнать, что конкретная сборка реально хочет, прежде чем переносить endpoint в код.
+  Профиль `soapbox-1613` — снятые ответы пака SoapBox Race Offline 1.9.0 (build 1613).
 
 **EA-Chat (XMPP)**
 - STARTTLS + legacy `jabber:iq:auth` с `nfsw.<personaId>`, ответы ровно те, что ждёт клиент.
@@ -213,6 +217,19 @@ logs/nfsw-20261103.001.log    # после 8 MB
 Формат: `timestamp [level] category message`. Категории: `APP`, `ENGINE`, `XMPP`, `RELAY`,
 `SESSION`, `AUTH`, `PERSONA`, `EVENT`, `DB`, `WEB`, `PROFILE`, `LOG`. Тела запросов/ответов
 и строки `HTTP/1.1` пишутся только при `logging.protocolTrace=true`.
+
+`protocolTrace` работает **независимо от `level`** и покрывает все три HTTP-порта:
+
+```
+[D] ENGINE > POST /Engine.svc/User/GetPermanentSession | 192.168.1.1 | application/xml | ua=EA/2.0 (compatible)
+[D] ENGINE     req  248B: <GetPermanentSessionData ...><machineID>-313...1</machineID>...
+[D] ENGINE     resp 445B: <UserInfo ...>
+[D] ENGINE < connection closed after 1 request(s) from 192.168.1.1
+[D] WEB    PUBLIC GET /api/status -> 200 3ms | 192.168.1.50 | application/json; charset=utf-8 | ua=Mozilla/5.0...
+```
+
+Строка `connection closed after N request(s)` — главный индикатор при разборе «игра
+вылетела»: если клиент ушёл после одного запроса, значит его убил именно ответ на него.
 
 ## Устройство проекта
 
