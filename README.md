@@ -270,6 +270,7 @@ tools/make-cert.ps1                 пересоздать TLS-сертифик�
 tools/fetch-webview2.ps1            скачать SDK WebView2 в lib/webview2
 tools/decompile-client.ps1          разложить managed-часть клиента в refs\_Src (реверс)
 tools/contract-check.ps1           сверить наши XML-шаблоны с DTO из gameplay.dll (реверс)
+tools/protocol-coverage.ps1        покрытие: все вызовы клиента (MyBinding.cs) vs наш сервер
 tools/enable-tls10.ps1              включить TLS 1.0 в SCHANNEL (для старого клиента)
 tools/import-refs.ps1               залить данные из ..\refs в data/profiles
 tools/test-*.ps1 / ci-test.ps1      тесты

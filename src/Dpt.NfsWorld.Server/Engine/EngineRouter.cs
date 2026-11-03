@@ -93,6 +93,11 @@ namespace Dpt.NfsWorld.Engine
                     HandleAuthenticate(req, res);
                     return;
                 }
+                if (lower == "/user/authenticateuserbytoken")
+                {
+                    HandleAuthenticateByToken(req, res);
+                    return;
+                }
                 if (lower == "/user/securelogin")
                 {
                     HandleSecureLogin(req, res);
@@ -293,6 +298,14 @@ namespace Dpt.NfsWorld.Engine
                     if (!ServeStatic(req, res, profile, rel)) SendEmpty(res, 200);
                     return;
                 }
+                if (lower.StartsWith("/performanceupgrades", StringComparison.Ordinal))
+                {
+                    // GET performanceUpgrades/{baseCarHash}?language=EN -> ArrayOfPerformanceUpgradeTrans.
+                    // The reference servers ship an empty array; the shop then shows the
+                    // stock list. A per-car file can override it later without touching code.
+                    if (!ServeStatic(req, res, profile, rel)) SendXml(res, "<ArrayOfPerformanceUpgradeTrans/>");
+                    return;
+                }
                 if (IsOptionalEndpoint(lower))
                 {
                     if (!ServeStatic(req, res, profile, rel))
@@ -354,6 +367,47 @@ namespace Dpt.NfsWorld.Engine
             Log.Info("AUTH", "login ok: " + account.Username + " (#" + account.Id + ") ip=" + req.RemoteIp);
             SendXml(res, "<LoginStatusVO><UserId>" + account.Id.ToString(CultureInfo.InvariantCulture) +
                          "</UserId><LoginToken>" + Util.EscapeXml(s.Token) + "</LoginToken><Description/></LoginStatusVO>");
+        }
+
+        /// <summary>
+        /// User/AuthenticateUserByToken with a &lt;Token&gt; body (EualaAccepted, Region, Value).
+        /// The client uses it to trade a token from the launcher/web for a game session.
+        /// We accept our own security tokens; anything else is a clean INVALID_USER and
+        /// never a crash, because the client shows a raw error on a truncated reply.
+        /// </summary>
+        private void HandleAuthenticateByToken(HttpRequest req, HttpResponse res)
+        {
+            string body = Text(req.Body);
+            string value = FirstNonEmpty(
+                Util.XmlValue(body, "Value"), Util.XmlValue(body, "value"),
+                req.QueryString("value"), req.QueryString("token"));
+
+            if (string.IsNullOrEmpty(value))
+            {
+                Log.Warn("AUTH", "AuthenticateUserByToken without a token, body=" + Util.Truncate(body, 160));
+                SendXml(res, "<LoginStatusVO><UserId>0</UserId><LoginToken/><Description>INVALID_USER</Description></LoginStatusVO>");
+                return;
+            }
+
+            PlayerSession existing = _sessions.ResolveByToken(value);
+            if (existing == null)
+            {
+                Log.Warn("AUTH", "AuthenticateUserByToken: unknown token " + SessionManager.Short(value) + " ip=" + req.RemoteIp);
+                SendXml(res, "<LoginStatusVO><UserId>0</UserId><LoginToken/><Description>INVALID_TOKEN</Description></LoginStatusVO>");
+                return;
+            }
+
+            Account account = _db.FindAccountById(existing.AccountId);
+            if (account == null)
+            {
+                SendXml(res, "<LoginStatusVO><UserId>0</UserId><LoginToken/><Description>INVALID_TOKEN</Description></LoginStatusVO>");
+                return;
+            }
+
+            PlayerSession fresh = _sessions.Create(account, req.RemoteIp, req.Header("User-Agent"), existing.MachineId);
+            Log.Info("AUTH", "token login ok: " + account.Username + " (#" + account.Id + ") ip=" + req.RemoteIp);
+            SendXml(res, "<LoginStatusVO><UserId>" + account.Id.ToString(CultureInfo.InvariantCulture) +
+                         "</UserId><LoginToken>" + Util.EscapeXml(fresh.Token) + "</LoginToken><Description/></LoginStatusVO>");
         }
 
         private void HandleModernAuth(HttpRequest req, HttpResponse res)

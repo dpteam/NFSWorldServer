@@ -90,6 +90,18 @@ Check 'authenticateUser returns LoginStatusVO' ($auth -match '<LoginStatusVO>')
 $loginToken = [regex]::Match($auth, '<LoginToken>(.*?)</LoginToken>').Groups[1].Value
 Check 'login token issued' ($loginToken.Length -ge 16)
 
+# Endpoints the client calls but our boot path never reaches - found by diffing
+# the decompiled MyBinding.cs against the router (tools\protocol-coverage.ps1).
+Write-Host ''
+Write-Host '=== engine: endpoints found by the coverage report ===' -ForegroundColor Cyan
+Check 'performanceUpgrades returns an array' ((HttpText "$engine/performanceUpgrades/12345?language=EN") -match 'ArrayOfPerformanceUpgradeTrans')
+$tokenXml = '<Token xmlns="http://schemas.datacontract.org/2004/07/Victory.DataLayer.Serialization"><EualaAccepted>true</EualaAccepted><Region>US</Region><Value>garbage-token</Value></Token>'
+$tokenResp = HttpText "$engine/User/AuthenticateUserByToken" 'POST' $tokenXml
+Check 'AuthenticateUserByToken answers LoginStatusVO' ($tokenResp -match '<LoginStatusVO>')
+Check 'AuthenticateUserByToken rejects an unknown token' ($tokenResp -match 'INVALID_TOKEN')
+$goodToken = HttpText "$engine/User/AuthenticateUserByToken" 'POST' ('<Token><Value>' + $loginToken + '</Value></Token>')
+Check 'AuthenticateUserByToken accepts a live token' ($goodToken -match '<LoginToken>[0-9a-fA-F\-]{20,}</LoginToken>')
+
 $permXml = '<GetPermanentSessionRequest><machineID>PROBE-MACHINE</machineID></GetPermanentSessionRequest>'
 $perm = HttpText "$engine/User/GetPermanentSession" 'POST' $permXml @{ securityToken = $loginToken }
 Check 'GetPermanentSession returns UserInfo' ($perm -match '<UserInfo')

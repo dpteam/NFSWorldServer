@@ -52,6 +52,7 @@ powershell -File tools\test-engine.ps1
 powershell -File tools\test-relay.ps1
 powershell -File tools\test-xmpp.ps1
 powershell -File tools\contract-check.ps1   :: наши шаблоны vs DTO клиента (реверс)
+powershell -File tools\protocol-coverage.ps1 :: все вызовы клиента vs наш сервер (реверс)
 powershell -File tools\ci-test.ps1     :: всё сразу
 ```
 
