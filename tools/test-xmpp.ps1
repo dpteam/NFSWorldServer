@@ -74,7 +74,20 @@ try {
         return $true
     }
     $ssl = New-Object System.Net.Security.SslStream($raw, $false, $callback)
-    $ssl.AuthenticateAsClient($HostName, $null, [System.Security.Authentication.SslProtocols]::Tls, $false)
+    try {
+        $ssl.AuthenticateAsClient($HostName, $null, [System.Security.Authentication.SslProtocols]::Tls, $false)
+    } catch {
+        $msg = $_.Exception.Message
+        if ($msg -match 'common algorithm|общего алгоритма') {
+            Write-Host '  [skip] TLS 1.0 is disabled on this host' -ForegroundColor Yellow
+            Write-Host '         EA-Chat needs TLS 1.0; run tools\enable-tls10.ps1 (admin), restart the server and retry.' -ForegroundColor Yellow
+            Write-Host ''
+            Write-Host 'RESULT: skipped (TLS 1.0 disabled)' -ForegroundColor Yellow
+            $tcp.Close()
+            exit 0
+        }
+        throw
+    }
     Check 'TLS handshake established' $ssl.IsEncrypted ("protocol " + $ssl.SslProtocol)
 
     Send-Text $ssl "<stream:stream xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams' to='$HostName' version='1.0'>"

@@ -1,0 +1,888 @@
+﻿<!doctype html>
+<html>
+<head>
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta charset="utf-8">
+<title>DPT.Server Launcher</title>
+<script>
+/* capture script errors so the C# side can log them (MSHTML hides them) */
+window.__errs = [];
+window.onerror = function (m, u, l) {
+  try {
+    window.__errs.push(String(m) + ' @' + String(u || '') + ':' + String(l));
+    document.title = 'LAUNCHER-ERR: ' + String(m);
+  } catch (e) { }
+  return true;
+};
+</script>
+<style>
+/* =========================================================================
+   DPT.Server launcher - MSHTML/IE11 friendly (no CSS variables, no grid)
+   ========================================================================= */
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+  font-size: 13px;
+}
+
+body.dark {
+  background: #121820;
+  color: #dbe4ee;
+}
+body.light {
+  background: #eef2f7;
+  color: #1e2c3a;
+}
+
+a { color: #4f9be8; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+.shell { padding: 14px 16px 8px; }
+
+/* -------------------------------------------------------------------- hero */
+
+.hero {
+  position: relative;
+  padding: 14px 16px;
+  border-radius: 10px;
+  background: #28527f;
+  background: -ms-linear-gradient(top, #3f78b4 0%, #234b77 100%);
+  background: linear-gradient(180deg, #3f78b4 0%, #234b77 100%);
+  color: #ffffff;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, .35), inset 0 1px 0 rgba(255, 255, 255, .25);
+  margin-bottom: 14px;
+  overflow: hidden;
+}
+
+.hero .logo {
+  float: left;
+  width: 46px;
+  height: 46px;
+  line-height: 46px;
+  text-align: center;
+  border-radius: 12px;
+  background: #16365a;
+  background: linear-gradient(145deg, #8dc0f0, #1c4570 75%);
+  font-weight: bold;
+  font-size: 15px;
+  margin-right: 12px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .5), 0 3px 10px rgba(0, 0, 0, .4);
+}
+
+.hero-text { float: left; padding-top: 3px; }
+.hero-title { font-size: 17px; font-weight: bold; letter-spacing: .3px; }
+.hero-sub { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; opacity: .8; }
+.hero-right { float: right; padding-top: 6px; text-align: right; }
+
+.pill {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, .16);
+  border: 1px solid rgba(255, 255, 255, .25);
+  font-size: 11px;
+  margin-left: 4px;
+}
+.pill.dim { opacity: .7; }
+
+.dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 4px;
+  background: #c04a4a;
+  margin-right: 4px;
+  vertical-align: 1px;
+}
+.dot.ok { background: #57d16b; }
+.dot.warn { background: #e0b64a; }
+
+/* ------------------------------------------------------------------ columns */
+
+.cols { width: 100%; }
+.col-main { float: left; width: 62%; padding-right: 12px; }
+.col-side { float: right; width: 38%; }
+.cols:after { content: ""; display: block; clear: both; }
+
+@media screen and (max-width: 700px) {
+  .col-main, .col-side { float: none; width: 100%; padding-right: 0; }
+}
+
+/* -------------------------------------------------------------------- cards */
+
+.card {
+  border-radius: 9px;
+  margin-bottom: 12px;
+  overflow: hidden;
+  border: 1px solid #2c3a49;
+  background: #1a222c;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, .25);
+}
+body.light .card { background: #ffffff; border-color: #c9d4e0; box-shadow: 0 2px 8px rgba(30, 50, 70, .08); }
+
+.card-head {
+  padding: 7px 12px;
+  font-size: 11px;
+  font-weight: bold;
+  letter-spacing: .8px;
+  text-transform: uppercase;
+  color: #8da2b8;
+  background: #151d26;
+  border-bottom: 1px solid #26313d;
+}
+body.light .card-head { background: #f1f5f9; border-bottom-color: #dde5ee; color: #5a6b7d; }
+
+.card-body { padding: 11px 12px; }
+
+/* ------------------------------------------------------------------- fields */
+
+.lbl {
+  display: block;
+  font-size: 10.5px;
+  letter-spacing: .6px;
+  text-transform: uppercase;
+  color: #7f93a8;
+  margin: 0 0 4px 1px;
+}
+body.light .lbl { color: #66788a; }
+
+input[type=text], select {
+  width: 100%;
+  padding: 7px 9px;
+  border-radius: 5px;
+  border: 1px solid #33414f;
+  background: #101720;
+  color: #e3ebf4;
+  font-family: inherit;
+  font-size: 13px;
+  outline: none;
+}
+body.light input[type=text], body.light select {
+  background: #f7f9fc; border-color: #c2cedb; color: #1d2a38;
+}
+input[type=text]:focus, select:focus { border-color: #4c8fd0; }
+
+.row { margin-top: 8px; }
+.row:after { content: ""; display: block; clear: both; }
+.row .grow { float: left; width: 50%; padding-right: 6px; }
+.row .grow + .grow { padding-right: 0; padding-left: 6px; }
+.row input.grow { float: left; width: 70%; }
+.row .btn { float: right; margin-top: 0; }
+
+.hint { margin-top: 5px; font-size: 11px; color: #6f8296; line-height: 1.4; }
+body.light .hint { color: #74869a; }
+
+/* ------------------------------------------------------------------ buttons */
+
+.btn {
+  padding: 7px 13px;
+  border-radius: 5px;
+  border: 1px solid #3a4a5c;
+  background: #263241;
+  background: linear-gradient(180deg, #2c3949 0%, #202a37 100%);
+  color: #dce6f1;
+  font-family: inherit;
+  font-size: 12.5px;
+  cursor: pointer;
+  margin-right: 6px;
+}
+.btn:hover { background: #334457; border-color: #4a6078; }
+.btn:active { position: relative; top: 1px; }
+body.light .btn { background: linear-gradient(180deg, #ffffff 0%, #e9eff6 100%); border-color: #c2cedb; color: #22313f; }
+body.light .btn:hover { background: #f3f7fc; }
+
+.btn.primary {
+  background: linear-gradient(180deg, #3f8ad4 0%, #235d9c 100%);
+  border-color: #1d5189;
+  color: #ffffff;
+}
+.btn.primary:hover { background: linear-gradient(180deg, #4a99e6 0%, #2a6cb2 100%); }
+
+.btn.big { font-size: 15px; padding: 10px 22px; font-weight: bold; }
+.btn.small { font-size: 11.5px; padding: 5px 9px; }
+
+.actions { margin: 4px 0 10px; }
+.actions .btn { margin-bottom: 6px; }
+
+.check { display: block; margin: 5px 0; font-size: 12px; cursor: pointer; }
+.check input { vertical-align: -2px; margin-right: 5px; }
+
+/* --------------------------------------------------------------------- log */
+
+.log {
+  height: 92px;
+  overflow-y: auto;
+  padding: 7px 10px;
+  border-radius: 7px;
+  border: 1px solid #2a3543;
+  background: #0e141b;
+  color: #9fb3c8;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 11px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+body.light .log { background: #f7f9fc; border-color: #d3dde7; color: #4a5c6e; }
+.log .ok { color: #5cc46e; }
+.log .err { color: #e07a7a; }
+.log .warn { color: #d8ae4c; }
+
+/* --------------------------------------------------------------------- kv */
+
+table.kv { width: 100%; border-collapse: collapse; font-size: 12px; }
+table.kv td { padding: 3px 0; color: #8fa3b8; }
+body.light table.kv td { color: #63768a; }
+table.kv td.v { text-align: right; color: #dbe5ef; font-weight: bold; }
+body.light table.kv td.v { color: #22313f; }
+
+.sep { height: 1px; background: #26313d; margin: 9px 0; }
+body.light .sep { background: #e2e9f1; }
+
+.svc-row { font-size: 11px; }
+.svc {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 10px;
+  margin-right: 4px;
+  background: #26313d;
+  color: #93a7ba;
+  border: 1px solid #303d4c;
+}
+.svc.ok { background: #1d3a26; color: #6fd083; border-color: #2c5a3a; }
+.svc.bad { background: #3a1f1f; color: #e08c8c; border-color: #5a2c2c; }
+
+/* ------------------------------------------------------------------- news */
+
+.news { max-height: 180px; overflow-y: auto; }
+.news-item { padding: 6px 0; border-bottom: 1px solid #26313d; }
+body.light .news-item { border-bottom-color: #e4ebf3; }
+.news-item:last-child { border-bottom: none; }
+.news-title { font-weight: bold; font-size: 12.5px; margin-bottom: 2px; }
+.news-body { font-size: 11.5px; color: #93a7ba; line-height: 1.45; }
+body.light .news-body { color: #5f7286; }
+
+/* ------------------------------------------------------------------ footer */
+
+.footer {
+  clear: both;
+  padding: 8px 2px 4px;
+  font-size: 10.5px;
+  color: #5f7183;
+  border-top: 1px solid #26313d;
+  margin-top: 4px;
+}
+body.light .footer { border-top-color: #dde5ee; color: #7c8b9b; }
+.footer .dim { float: right; opacity: .8; }
+
+::-webkit-scrollbar { width: 9px; height: 9px; }
+::-webkit-scrollbar-thumb { background: #33414f; border-radius: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+/* --------------------------------------------------- launcher 0.2 additions */
+
+.srv-row { display: flex; gap: 6px; align-items: stretch; }
+.srv-row select { flex: 1 1 auto; min-width: 0; }
+.srv-row .btn { margin: 0; padding: 0 10px; flex: none; }
+
+.hint b { color: #c8d8e8; font-weight: 600; }
+body.light .hint b { color: #2c3e50; }
+
+button[disabled] { opacity: .6; cursor: default; }
+.btn:disabled:hover { filter: none; }
+
+.svc.bad { background: #3a1f1f; color: #e08c8c; border-color: #5a2c2c; }
+
+</style>
+</head>
+<body class="dark">
+
+<div class="shell">
+
+  <div class="hero">
+    <div class="logo">DPT</div>
+    <div class="hero-text">
+      <div class="hero-title">DPT.Server</div>
+      <div class="hero-sub">Need For Speed World</div>
+    </div>
+    <div class="hero-right">
+      <span class="pill" id="statusPill"><span class="dot" id="statusDot"></span> <span id="statusText">РїСЂРѕРІРµСЂРєР°вЂ¦</span></span>
+      <span class="pill dim" id="versionPill">v0.2.0</span>
+    </div>
+  </div>
+
+  <div class="cols">
+    <div class="col-main">
+
+      <div class="card">
+        <div class="card-head">РЎРµСЂРІРµСЂ</div>
+        <div class="card-body">
+          <label class="lbl" for="serverSel">Р’С‹Р±РµСЂРёС‚Рµ СЃРµСЂРІРµСЂ</label>
+          <div class="srv-row">
+            <select id="serverSel"></select>
+            <button type="button" id="btnAddServer" class="btn small" title="Р”РѕР±Р°РІРёС‚СЊ СЃРІРѕР№ СЃРµСЂРІРµСЂ">+</button>
+            <button type="button" id="btnDelServer" class="btn small" title="РЈРґР°Р»РёС‚СЊ РІС‹Р±СЂР°РЅРЅС‹Р№">Г—</button>
+          </div>
+
+          <label class="lbl" for="serverUrl" style="margin-top:9px">РђРґСЂРµСЃ</label>
+          <input id="serverUrl" type="text" spellcheck="false" placeholder="http://nfsw.dartpower.xyz:44600">
+          <div class="hint" id="serverHint">Р›РѕРєР°Р»СЊРЅС‹Р№ СЂРµР¶РёРј РїРѕРґРЅРёРјРµС‚ СЃРІРѕР№ СЃРµСЂРІРµСЂ (РїРѕСЂС‚С‹ 44620+, РѕС‚РґРµР»СЊРЅС‹Рµ СЃРѕС…СЂР°РЅРµРЅРёСЏ РІ data\offline).</div>
+
+          <div class="row" style="margin-top:8px">
+            <div class="grow">
+              <label class="lbl" for="region">Р РµРіРёРѕРЅ</label>
+              <select id="region">
+                <option value="US">US</option>
+                <option value="EU">EU</option>
+                <option value="WORLD">WORLD</option>
+              </select>
+            </div>
+            <div class="grow">
+              <label class="lbl" for="extraArgs">Р”РѕРї. Р°СЂРіСѓРјРµРЅС‚С‹</label>
+              <input id="extraArgs" type="text" spellcheck="false" placeholder="РЅРµРѕР±СЏР·Р°С‚РµР»СЊРЅРѕ">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">РРіСЂР°</div>
+        <div class="card-body">
+          <label class="lbl" for="gamePath">nfsw.exe</label>
+          <div class="row">
+            <input id="gamePath" class="grow" type="text" spellcheck="false" placeholder="nfsw\nfsw.exe">
+            <button type="button" id="btnBrowse" class="btn">РћР±Р·РѕСЂвЂ¦</button>
+          </div>
+          <div class="hint" id="gameHint">РњРѕР¶РЅРѕ РѕСЃС‚Р°РІРёС‚СЊ РѕС‚РЅРѕСЃРёС‚РµР»СЊРЅС‹Р№ РїСѓС‚СЊ, РµСЃР»Рё РїР°РїРєР° РёРіСЂС‹ СЂСЏРґРѕРј СЃ Р»Р°СѓРЅС‡РµСЂРѕРј.</div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button type="button" id="btnPlay" class="btn primary big">&#9654; РРіСЂР°С‚СЊ</button>
+        <button type="button" id="btnCheck" class="btn">РџСЂРѕРІРµСЂРёС‚СЊ</button>
+        <button type="button" id="btnSave" class="btn">РЎРѕС…СЂР°РЅРёС‚СЊ</button>
+        <button type="button" id="btnSite" class="btn">Р’РµР±-РјРѕСЂРґР°</button>
+      </div>
+
+      <div class="log" id="log"></div>
+
+    </div>
+
+    <div class="col-side">
+
+      <div class="card">
+        <div class="card-head">РЎС‚Р°С‚СѓСЃ СЃРµСЂРІРµСЂР°</div>
+        <div class="card-body">
+          <table class="kv">
+            <tr><td>РёРіСЂРѕРєРѕРІ РѕРЅР»Р°Р№РЅ</td><td id="kOnline" class="v">-</td></tr>
+            <tr><td>РїРµСЂСЃРѕРЅР°Р¶РµР№</td><td id="kPersonas" class="v">-</td></tr>
+            <tr><td>РєРѕРјРЅР°С‚ relay</td><td id="kRooms" class="v">-</td></tr>
+            <tr><td>uptime</td><td id="kUptime" class="v">-</td></tr>
+            <tr><td>build</td><td id="kVersion" class="v">-</td></tr>
+          </table>
+          <div class="sep"></div>
+          <div class="svc-row">
+            <span class="svc" id="svcEngine">engine</span>
+            <span class="svc" id="svcXmpp">chat</span>
+            <span class="svc" id="svcRelay">relay</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">РќРѕРІРѕСЃС‚Рё</div>
+        <div class="card-body news" id="newsBox">
+          <div class="news-item">
+            <div class="news-title">Р”РѕР±СЂРѕ РїРѕР¶Р°Р»РѕРІР°С‚СЊ РІ DPT.Server</div>
+            <div class="news-body">Р’С‹Р±РµСЂРёС‚Рµ СЃРµСЂРІРµСЂ СЃР»РµРІР° Рё РЅР°Р¶РјРёС‚Рµ В«РРіСЂР°С‚СЊВ». Р›РѕРєР°Р»СЊРЅС‹Р№ СЂРµР¶РёРј РїРѕРґРЅРёРјР°РµС‚
+              СЃРІРѕР№ СЃРµСЂРІРµСЂ СЃ РѕС‚РґРµР»СЊРЅС‹РјРё СЃРѕС…СЂР°РЅРµРЅРёСЏРјРё, РґРѕРјРµРЅ вЂ” РїСѓР±Р»РёС‡РЅС‹Р№ РѕРЅР»Р°Р№РЅ.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">РћРїС†РёРё</div>
+        <div class="card-body">
+          <label class="check"><input id="optSound" type="checkbox" checked> Р·РІСѓРєРё</label>
+          <label class="check"><input id="optClose" type="checkbox" checked> Р·Р°РєСЂС‹РІР°С‚СЊ Р»Р°СѓРЅС‡РµСЂ РїСЂРё СЃС‚Р°СЂС‚Рµ РёРіСЂС‹</label>
+          <div class="sep"></div>
+          <div class="row">
+            <button type="button" id="btnTheme" class="btn small">РўРµРјР°</button>
+            <button type="button" id="btnQuit" class="btn small">Р’С‹С…РѕРґ</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="footer">
+    <span>DPT.Server launcher В· MSHTML В· Р±РµР· РІРЅРµС€РЅРёС… Р±РёР±Р»РёРѕС‚РµРє</span>
+    <span id="connLabel" class="dim">РµС‰С‘ РЅРµ РїСЂРѕРІРµСЂСЏР»Рё</span>
+  </div>
+</div>
+
+<script>
+/* =========================================================================
+   DPT.Server launcher - ES5 (IE11 / MSHTML), bridge = window.external
+   ========================================================================= */
+(function (global) {
+  'use strict';
+
+  var ext = global.external || {};
+  var booted = false;
+  var state = {
+    servers: [],
+    selected: 0,
+    mode: 'local',
+    sound: true,
+    checkPoll: null,
+    playPoll: null,
+    lastCheckSeq: -1,
+    lastPlaySeq: -1,
+    autoTimer: null,
+    browseBusy: false
+  };
+
+  function $(id) { return document.getElementById(id); }
+
+
+
+  function pad(n) { return n < 10 ? '0' + n : '' + n; }
+
+  function log(text, cls) {
+    var box = $('log');
+    if (!box) return;
+    var line = document.createElement('div');
+    if (cls) line.className = cls;
+    var d = new Date();
+    line.textContent = pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds()) + '  ' + text;
+    box.appendChild(line);
+    box.scrollTop = box.scrollHeight;
+    while (box.childNodes.length > 250) box.removeChild(box.firstChild);
+  }
+
+  function setText(id, text) { var e = $(id); if (e) e.textContent = text; }
+
+  function parseLines(text) {
+    var out = {};
+    if (!text) return out;
+    var lines = String(text).split(/\r?\n/);
+    for (var i = 0; i < lines.length; i++) {
+      var idx = lines[i].indexOf('=');
+      if (idx <= 0) continue;
+      out[lines[i].substring(0, idx).trim()] = lines[i].substring(idx + 1);
+    }
+    return out;
+  }
+
+  function esc(s) {
+    return String(s === null || s === undefined ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function beep(kind) {
+    if (!state.sound) return;
+    var AC = global.AudioContext || global.webkitAudioContext;
+    if (!AC) return;
+    try {
+      var ctx = new AC();
+      var osc = ctx.createOscillator();
+      var gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = kind === 'err' ? 260 : kind === 'ok' ? 720 : 520;
+      gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.12, ctx.currentTime + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.22);
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.start(); osc.stop(ctx.currentTime + 0.25);
+    } catch (e) { }
+  }
+
+  // --------------------------------------------------------------- servers
+
+  function parseServers(text) {
+    var list = [];
+    if (!text) return list;
+    var chunks = text.split(';;');
+    for (var i = 0; i < chunks.length; i++) {
+      if (!chunks[i]) continue;
+      var p = chunks[i].split('|');
+      if (p.length < 2 || !p[1]) continue;
+      list.push({
+        name: p[0] || p[1],
+        url: p[1],
+        mode: (p[2] || 'remote').toLowerCase() === 'local' ? 'local' : 'remote',
+        builtin: p[3] === '1'
+      });
+    }
+    return list;
+  }
+
+  function serversString() {
+    var parts = [];
+    for (var i = 0; i < state.servers.length; i++) {
+      var s = state.servers[i];
+      parts.push(clean(s.name) + '|' + clean(s.url) + '|' + s.mode + '|' + (s.builtin ? '1' : '0'));
+    }
+    return parts.join(';;');
+  }
+
+  function clean(v) {
+    return String(v === null || v === undefined ? '' : v).replace(/\|/g, '/').replace(/;/g, ',').replace(/[\r\n]/g, ' ').trim();
+  }
+
+  function renderServers() {
+    var sel = $('serverSel');
+    if (!sel) return;
+    sel.options.length = 0;
+    for (var i = 0; i < state.servers.length; i++) {
+      var o = document.createElement('option');
+      o.value = String(i);
+      o.text = state.servers[i].name;
+      /* IE chokes on select.add(option, null); assigning by index always works */
+      sel.options[sel.options.length] = o;
+    }
+    if (state.selected >= state.servers.length) state.selected = 0;
+    sel.selectedIndex = state.selected;
+    applyServer(state.selected);
+  }
+
+  function applyServer(index) {
+    if (index < 0 || index >= state.servers.length) return;
+    state.selected = index;
+    var s = state.servers[index];
+    state.mode = s.mode;
+    if ($('serverUrl')) $('serverUrl').value = s.url;
+    var hint = $('serverHint');
+    if (hint) {
+      hint.innerHTML = s.mode === 'local'
+        ? 'Р›РѕРєР°Р»СЊРЅС‹Р№ СЂРµР¶РёРј: Р»Р°СѓРЅС‡РµСЂ СЃР°Рј РїРѕРґРЅРёРјРµС‚ <b>NFSWorldServer.exe --offline</b> (РїРѕСЂС‚С‹ 44620+, СЃРѕС…СЂР°РЅРµРЅРёСЏ РІ <b>data\\offline</b>).'
+        : 'РЈРґР°Р»С‘РЅРЅС‹Р№ СЃРµСЂРІРµСЂ: РёРіСЂР° РїРѕРґРєР»СЋС‡РёС‚СЃСЏ Рє СЌС‚РѕРјСѓ Р°РґСЂРµСЃСѓ. РџРѕСЂС‚ РёРіСЂРѕРІРѕРіРѕ endpoint вЂ” <b>44600</b>.';
+    }
+  }
+
+  function addServer() {
+    var name = global.prompt('РќР°Р·РІР°РЅРёРµ СЃРµСЂРІРµСЂР°:', 'РњРѕР№ СЃРµСЂРІРµСЂ');
+    if (name === null) return;
+    var url = global.prompt('РђРґСЂРµСЃ СЃРµСЂРІРµСЂР° (РґРѕРјРµРЅ РёР»Рё URL):', 'http://example.com:44600');
+    if (url === null) return;
+    url = clean(url);
+    if (!url) { log('РїСѓСЃС‚РѕР№ Р°РґСЂРµСЃ вЂ” РЅРµ РґРѕР±Р°РІРёР»', 'err'); return; }
+    if (url.indexOf('://') < 0) url = 'http://' + url;
+    state.servers.push({ name: clean(name) || url, url: url, mode: 'remote', builtin: false });
+    state.selected = state.servers.length - 1;
+    renderServers();
+    save(true);
+    log('РґРѕР±Р°РІР»РµРЅ СЃРµСЂРІРµСЂ: ' + name + ' -> ' + url, 'ok');
+    check(false);
+  }
+
+  function removeServer() {
+    var s = state.servers[state.selected];
+    if (!s) return;
+    if (s.builtin) { log('РІСЃС‚СЂРѕРµРЅРЅС‹Р№ СЃРµСЂРІРµСЂ СѓРґР°Р»РёС‚СЊ РЅРµР»СЊР·СЏ', 'warn'); return; }
+    if (!global.confirm('РЈРґР°Р»РёС‚СЊ В«' + s.name + 'В»?')) return;
+    state.servers.splice(state.selected, 1);
+    if (state.selected >= state.servers.length) state.selected = state.servers.length - 1;
+    renderServers();
+    save(true);
+    log('СЃРµСЂРІРµСЂ СѓРґР°Р»С‘РЅ: ' + s.name, 'warn');
+  }
+
+  // -------------------------------------------------------------- settings
+
+  function collect() {
+    return {
+      serverUrl: $('serverUrl') ? $('serverUrl').value : '',
+      gamePath: $('gamePath') ? $('gamePath').value : '',
+      region: $('region') ? $('region').value : 'US',
+      extraArgs: $('extraArgs') ? $('extraArgs').value : '',
+      theme: document.body.className === 'light' ? 'light' : 'dark',
+      sound: ($('optSound') && $('optSound').checked) ? '1' : '0',
+      closeOnPlay: ($('optClose') && $('optClose').checked) ? '1' : '0'
+    };
+  }
+
+  function save(quiet) {
+    var c = collect();
+    // keep the selected entry in sync with the URL field
+    var s = state.servers[state.selected];
+    if (s) {
+      s.url = c.serverUrl;
+      state.mode = s.mode;
+    }
+    if (ext.SaveSettings) {
+      try {
+        ext.SaveSettings(c.serverUrl, c.gamePath, c.region, c.extraArgs, c.theme, c.sound, c.closeOnPlay,
+                         serversString(), String(state.selected));
+      } catch (e) { log('save: ' + e.message, 'err'); }
+    }
+    if (!quiet) { log('РЅР°СЃС‚СЂРѕР№РєРё СЃРѕС…СЂР°РЅРµРЅС‹', 'ok'); beep('ok'); }
+  }
+
+  function applySettings(s) {
+    state.sound = s.sound !== '0';
+    document.body.className = (s.theme === 'light') ? 'light' : 'dark';
+    if ($('gamePath')) $('gamePath').value = s.gamePath || 'nfsw\\nfsw.exe';
+    if ($('region')) $('region').value = (s.region || 'US').toUpperCase();
+    if ($('extraArgs')) $('extraArgs').value = s.extraArgs || '';
+    if ($('optSound')) $('optSound').checked = state.sound;
+    if ($('optClose')) $('optClose').checked = s.closeOnPlay !== '0';
+
+    state.servers = parseServers(s.servers);
+    if (!state.servers.length) {
+      state.servers = [
+        { name: 'Р›РѕРєР°Р»СЊРЅС‹Р№ СЃРµСЂРІРµСЂ', url: 'http://127.0.0.1:44620', mode: 'local', builtin: true },
+        { name: 'DPT.Server (РґРѕРјРµРЅ)', url: 'http://nfsw.dartpower.xyz:44600', mode: 'remote', builtin: true }
+      ];
+    }
+    state.selected = parseInt(s.selected, 10);
+    if (isNaN(state.selected) || state.selected < 0 || state.selected >= state.servers.length) state.selected = 0;
+    if (s.serverUrl) state.servers[state.selected].url = s.serverUrl;
+    renderServers();
+  }
+
+  // ----------------------------------------------------------------- checks
+
+  function setStatus(kind, text) {
+    var dot = $('statusDot');
+    if (dot) dot.className = 'dot ' + (kind === 'ok' ? 'ok' : kind === 'busy' ? 'warn' : '');
+    setText('statusText', text);
+    setText('connLabel', kind === 'ok' ? ('РїРѕРґРєР»СЋС‡РµРЅРѕ Рє ' + serverBase()) : (kind === 'busy' ? 'РїСЂРѕРІРµСЂСЏСЋвЂ¦' : text));
+  }
+
+  function serverBase() {
+    var u = $('serverUrl') ? String($('serverUrl').value).replace(/^\s+|\s+$/g, '') : '';
+    if (!u) return 'http://127.0.0.1:44620';
+    if (u.indexOf('://') < 0) u = 'http://' + u;
+    while (u.length > 1 && u.charAt(u.length - 1) === '/') u = u.substring(0, u.length - 1);
+    var i = u.toLowerCase().indexOf('/engine.svc');
+    if (i >= 0) u = u.substring(0, i);
+    return u;
+  }
+
+  function check(manual) {
+    if (!ext.StartCheck) { log('РЅРµС‚ РјРѕСЃС‚Р° window.external', 'err'); setStatus('bad', 'РЅРµС‚ РјРѕСЃС‚Р°'); return; }
+    if (manual) log('РїСЂРѕРІРµСЂСЏСЋ ' + serverBase() + ' вЂ¦');
+    setStatus('busy', 'РїСЂРѕРІРµСЂРєР°вЂ¦');
+    try { ext.StartCheck(serverBase()); } catch (e) { setStatus('bad', 'РѕС€РёР±РєР°'); log('check: ' + e.message, 'err'); return; }
+
+    if (state.checkPoll) global.clearInterval(state.checkPoll);
+    state.checkPoll = global.setInterval(function () {
+      var raw;
+      try { raw = ext.GetCheckResult(); } catch (e) { return; }
+      if (!raw) return;
+      var nl = raw.indexOf('\n');
+      var head = parseLines(raw.substring(0, nl));
+      if (head.seq && parseInt(head.seq, 10) === state.lastCheckSeq && !manual) { /* keep waiting */ }
+      var body = parseLines(raw.substring(nl + 1));
+      if (body.state === 'running') return;
+      global.clearInterval(state.checkPoll);
+      state.checkPoll = null;
+      if (body.state === 'ok') {
+        setStatus('ok', 'РѕРЅР»Р°Р№РЅ');
+        var st = null;
+        try { st = JSON.parse(body.status); } catch (e) { st = null; }
+        if (st) renderStatus(st);
+        if (manual) log('СЃРµСЂРІРµСЂ РѕС‚РІРµС‡Р°РµС‚', 'ok');
+        beep('ok');
+        loadNews(serverBase());
+      } else {
+        setStatus('bad', 'РЅРµС‚ СЃРІСЏР·Рё');
+        setText('kOnline', '-'); setText('kPersonas', '-'); setText('kRooms', '-');
+        setText('kUptime', '-'); setText('kVersion', '-');
+        setSvc('svcEngine', false); setSvc('svcXmpp', false); setSvc('svcRelay', false);
+        log('РѕС€РёР±РєР°: ' + (body.message || 'СЃРµСЂРІРµСЂ РЅРµРґРѕСЃС‚СѓРїРµРЅ'), 'err');
+        if (manual) beep('err');
+      }
+    }, 300);
+  }
+
+  function setSvc(id, ok) {
+    var e = $(id);
+    if (e) e.className = 'svc ' + (ok ? 'ok' : 'bad');
+  }
+
+  function renderStatus(s) {
+    var c = s.counts || {};
+    var sv = s.services || {};
+    setText('kOnline', c.online === undefined ? '-' : String(c.online));
+    setText('kPersonas', c.personas === undefined ? '-' : String(c.personas));
+    setText('kRooms', c.rooms === undefined ? '-' : String(c.rooms));
+    setText('kUptime', s.uptime || '-');
+    setText('kVersion', 'v' + (s.version || '?') + ' / ' + (s.buildDate || '?'));
+    setSvc('svcEngine', !!sv.engine);
+    setSvc('svcXmpp', !!sv.xmpp);
+    setSvc('svcRelay', !!sv.relay);
+  }
+
+  function loadNews(base) {
+    var box = $('newsBox');
+    if (!box || !ext.HttpGet) return;
+    var xml = ext.HttpGet(base + '/Engine.svc/LoginAnnouncements', 3000);
+    if (!xml || xml.indexOf('ERROR') === 0 || xml.indexOf('<') < 0) return;
+    try {
+      var doc = null;
+      if (global.DOMParser) doc = new global.DOMParser().parseFromString(xml, 'text/xml');
+      else { doc = new ActiveXObject('Microsoft.XMLDOM'); doc.async = false; doc.loadXML(xml); }
+      if (!doc) return;
+      var items = doc.getElementsByTagName('NewsArticleTrans');
+      if (!items || items.length === 0) return;
+      var html = '';
+      for (var i = 0; i < items.length && i < 3; i++) {
+        html += '<div class="news-item"><div class="news-title">' + esc(tagText(items[i], 'Title')) +
+                '</div><div class="news-body">' + esc(tagText(items[i], 'Body')) + '</div></div>';
+      }
+      if (html) box.innerHTML = html;
+    } catch (e) { }
+  }
+
+  function tagText(node, name) {
+    var list = node.getElementsByTagName(name);
+    if (!list || list.length === 0) return '';
+    return list[0].textContent || list[0].text || '';
+  }
+
+  // ------------------------------------------------------------------- play
+
+  function play() {
+    if (!ext.BeginPlay) { log('РЅРµС‚ РјРѕСЃС‚Р° window.external', 'err'); return; }
+    var c = collect();
+    save(true);
+    log('Р·Р°РїСѓСЃРє: ' + (state.mode === 'local' ? 'Р»РѕРєР°Р»СЊРЅС‹Р№ СЃРµСЂРІРµСЂ' : c.serverUrl));
+    var btn = $('btnPlay');
+    if (btn) { btn.disabled = true; btn.innerHTML = '&#8987; Р—Р°РїСѓСЃРєвЂ¦'; }
+    setStatus('busy', 'Р·Р°РїСѓСЃРєР°СЋвЂ¦');
+    try { ext.BeginPlay(c.serverUrl, c.gamePath, c.region, c.extraArgs, state.mode); }
+    catch (e) { log('play: ' + e.message, 'err'); resetPlay(btn); return; }
+
+    if (state.playPoll) global.clearInterval(state.playPoll);
+    state.playPoll = global.setInterval(function () {
+      var raw;
+      try { raw = ext.GetPlayResult(); } catch (e) { return; }
+      if (!raw) return;
+      var nl = raw.indexOf('\n');
+      var body = parseLines(raw.substring(nl + 1));
+      if (body.state === 'running' || body.state === 'idle') return;
+      global.clearInterval(state.playPoll);
+      state.playPoll = null;
+      resetPlay(btn);
+      if (body.state === 'ok') {
+        setStatus('ok', 'РѕРЅР»Р°Р№РЅ');
+        log('РёРіСЂР° Р·Р°РїСѓС‰РµРЅР°: ' + (body.exe || ''), 'ok');
+        log('Р°СЂРіСѓРјРµРЅС‚С‹: ' + (body.args || ''), '');
+        beep('ok');
+        if ($('optClose') && $('optClose').checked && ext.CloseApp) {
+          global.setTimeout(function () { try { ext.CloseApp(); } catch (e) { } }, 1200);
+        }
+      } else {
+        setStatus('bad', 'РѕС€РёР±РєР°');
+        log('РЅРµ СѓРґР°Р»РѕСЃСЊ: ' + (body.message || '?'), 'err');
+        beep('err');
+      }
+    }, 350);
+  }
+
+  function resetPlay(btn) {
+    if (!btn) return;
+    btn.disabled = false;
+    btn.innerHTML = '&#9654; РРіСЂР°С‚СЊ';
+  }
+
+  // ------------------------------------------------------------------- wire
+
+  function browse() {
+    if (state.browseBusy) return;
+    state.browseBusy = true;
+    try {
+      var path = ext.BrowseGame ? ext.BrowseGame() : '';
+      if (path && path.indexOf('ERROR') !== 0) {
+        if ($('gamePath')) $('gamePath').value = path;
+        save(true);
+        log('РїСѓС‚СЊ Рє РёРіСЂРµ: ' + path, 'ok');
+      }
+    } finally {
+      state.browseBusy = false;
+    }
+  }
+
+  function openSite() {
+    if (ext.OpenLink) ext.OpenLink(serverBase() + '/');
+  }
+
+  function toggleTheme() {
+    document.body.className = document.body.className === 'light' ? 'dark' : 'light';
+    save(true);
+  }
+
+  function wire() {
+    var sel = $('serverSel');
+    if (sel) sel.onchange = function () { applyServer(this.selectedIndex); save(true); check(false); };
+    if ($('btnAddServer')) $('btnAddServer').onclick = addServer;
+    if ($('btnDelServer')) $('btnDelServer').onclick = removeServer;
+    if ($('btnPlay')) $('btnPlay').onclick = play;
+    if ($('btnCheck')) $('btnCheck').onclick = function () { check(true); };
+    if ($('btnSave')) $('btnSave').onclick = function () { save(false); };
+    if ($('btnBrowse')) $('btnBrowse').onclick = browse;
+    if ($('btnSite')) $('btnSite').onclick = openSite;
+    if ($('btnTheme')) $('btnTheme').onclick = toggleTheme;
+    if ($('btnQuit')) $('btnQuit').onclick = function () { if (ext.CloseApp) ext.CloseApp(); };
+
+    var fields = ['serverUrl', 'gamePath', 'region', 'extraArgs'];
+    for (var i = 0; i < fields.length; i++) {
+      var el = $(fields[i]);
+      if (!el) continue;
+      el.onchange = function () { save(true); };
+      el.onblur = function () { save(true); };
+    }
+    if ($('optSound')) $('optSound').onchange = function () { state.sound = this.checked; save(true); };
+    if ($('optClose')) $('optClose').onchange = function () { save(true); };
+  }
+
+  function boot() {
+    if (booted) return;
+    booted = true;
+
+    try {
+      var s = {};
+      try { s = parseLines(ext.GetSettings ? ext.GetSettings() : ''); } catch (e) { s = {}; }
+      applySettings(s);
+      wire();
+
+      bridgeLog('boot: servers=' + state.servers.length + ' selected=' + state.selected +
+                ' url=' + (($('serverUrl') || {}).value || '') + ' mode=' + state.mode);
+      /* page title is read by the C# side; no COM calls from script for diagnostics */
+      document.title = 'LAUNCHER-OK servers=' + state.servers.length + ' url=' + (($('serverUrl') || {}).value || '');
+      log('DPT.Server launcher v' + (ext.Version ? ext.Version() : '?'));
+      log('bridge: ' + (ext.BeginPlay ? 'ok' : 'MISSING (window.external)'), ext.BeginPlay ? 'ok' : 'err');
+
+      check(false);
+      state.autoTimer = global.setInterval(function () {
+        if (!state.checkPoll) check(false);
+      }, 15000);
+
+      global.onbeforeunload = function () { save(true); };
+    } catch (e) {
+      bridgeLog('BOOT ERROR: ' + (e && e.message ? e.message : e));
+      document.title = 'LAUNCHER-ERR: ' + (e && e.message ? e.message : e);
+      log('ошибка запуска: ' + (e && e.message ? e.message : e), 'err');
+    }
+  }
+
+  /* Same text goes to the page log and to launcher.log through the bridge. */
+  function bridgeLog(text) {
+    try { if (ext.Log) ext.Log(text); } catch (e) { }
+  }
+
+  if (document.readyState === 'complete' || document.readyState === 'interactive') boot();
+  else if (global.attachEvent) global.attachEvent('onload', boot);
+  else global.addEventListener('load', boot, false);
+})(this);
+</script>
+</body>
+</html>

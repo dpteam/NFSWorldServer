@@ -144,3 +144,32 @@ NFS World
   handshake релея (`gameinfo`, loading, countdown) в `RelayServer`;
 - разобрать XML arbitration-пакетов из `event/arbitration` и считать результаты гонок;
 - по желанию: `leanrea` как skill вместо REA (`npx skills add aicodeking/leanrea -g -a opencode -y`).
+
+---
+
+## Итерация 3 — лаунчер без MSHTML (`dptnfsw://` + веб-страница)
+
+Причина: MSHTML/WebBrowser внутри WinForms оказался ненадёжным — скрипты на странице
+то не запускались, то падали на доступе к `window.external`, кнопки выглядели мёртвыми,
+а выбор exe открывался дважды. Вместо того чтобы чинить COM-мост, лаунчер разделён на
+две простые части.
+
+- [x] **`NFSWorldLauncher.exe` — оконный обработчик протокола**, без UI и без WebBrowser:
+      `dptnfsw://play?server=<url>&local=0|1&region=US&args=...`.
+      Находит `nfsw.exe` (настройки → рядом с exe → типовые пути → диалог один раз),
+      для локального сервера сначала поднимает `NFSWorldServer.exe --offline` и ждёт
+      `/api/health`, затем запускает `nfsw.exe US <url>/Engine.svc a 1`.
+      `--install` / `--uninstall` пишут `HKCU\Software\Classes\dptnfsw` (без админа),
+      `--parse` печатает разбор ссылки, `--selftest` — 18 проверок без UI.
+- [x] **Страница лаунчера `/launcher/`** на публичной доске (AdHoc-стиль): список серверов
+      в localStorage, добавление/удаление, режим локальный/удалённый, кнопка «Играть»
+      (обычная ссылка `dptnfsw://…`), проверка своего сервера, темы.
+- [x] **`install-launcher.cmd`** — один раз запустить, дальше кнопка в вебе работает.
+- [x] Веб-сервер понимает каталоги: `/launcher/` → `public/launcher/index.html`.
+- [x] Удалены `LauncherForm.cs`, `LauncherBridge.cs`, `BrowserEmulation.cs` и вшитые
+      MSHTML-ресурсы; `build.cmd` больше не передаёт `/resource`, добавлен `/codepage:65001`
+      (из-за его отсутствия русский текст в диалогах раньше превращался в кракозябры).
+- [x] `launcher.ini` остался: путь к игре, последний сервер, список серверов, страница.
+
+Проверено: `NFSWorldLauncher.exe --selftest` — 18/18; `reg query HKCU\...\dptnfsw` показывает
+команду с `"%1"`; `/launcher/` отдаёт 200 и рисует список серверов.

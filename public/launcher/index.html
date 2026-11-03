@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>DPT.Server · Launcher</title>
+<link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg">
+<link rel="stylesheet" href="../assets/css/app.css?v=1">
+<link rel="stylesheet" href="../assets/css/icons.css?v=1">
+<link rel="stylesheet" href="../assets/css/dpt.css?v=1">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../" title="DPT.Server · NFS World">
+      <span class="brand-mark"><i class="fas fa-flag-checkered"></i></span>
+      <span class="brand-text"><b>DPT.Server</b><small>Launcher</small></span>
+    </a>
+    <nav class="tabs" aria-label="Разделы">
+      <button class="tab active" data-tab="play"><i class="fas fa-play"></i><span>Играть</span></button>
+      <button class="tab" data-tab="servers"><i class="fas fa-tower-broadcast"></i><span>Серверы</span></button>
+      <button class="tab" data-tab="help"><i class="fas fa-circle-question"></i><span>Справка</span></button>
+    </nav>
+    <div class="top-right">
+      <span class="conn-pill" id="connPill"><span class="dot"></span><span class="txt" id="connText">проверка…</span></span>
+      <a class="icon-btn" href="../" title="Публичная доска"><i class="fas fa-gauge"></i></a>
+      <button class="icon-btn" id="btnTheme" title="Сменить тему"><i class="fas fa-moon"></i></button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section class="panel" data-panel="play">
+    <div class="panel-head">
+      <h2><i class="fas fa-play"></i> Запуск игры</h2>
+      <span class="panel-badge" id="modeBadge">–</span>
+    </div>
+    <div class="panel-body">
+      <label class="lbl" for="serverSel">Сервер</label>
+      <div class="srv-row">
+        <select id="serverSel"></select>
+        <button type="button" class="btn small" id="btnAdd" title="Добавить сервер"><i class="fas fa-plus"></i></button>
+        <button type="button" class="btn small" id="btnDel" title="Удалить выбранный"><i class="fas fa-xmark"></i></button>
+      </div>
+      <div class="hint" id="serverHint">Выберите сервер и нажмите «Играть».</div>
+
+      <div class="row-actions" style="margin-top:14px">
+        <a class="btn primary big" id="btnPlay" href="#"><i class="fas fa-play"></i> Играть</a>
+        <button type="button" class="btn" id="btnCheck"><i class="fas fa-rotate"></i> Проверить</button>
+        <a class="btn" id="btnOpen" href="../" target="_blank" rel="noopener"><i class="fas fa-gauge"></i> Веб-морда</a>
+      </div>
+
+      <div class="about" style="margin-top:14px">
+        <div class="about-row"><span>Обработчик</span><b id="handlerState">dptnfsw://</b></div>
+        <div class="about-row"><span>Текущий адрес</span><b id="addrText">–</b></div>
+        <div class="about-row"><span>Статус сервера</span><b id="serverState">–</b></div>
+      </div>
+
+      <div class="about-note" style="margin-top:10px">
+        Кнопка «Играть» открывает ссылку <code>dptnfsw://…</code>. Браузер спросит разрешение
+        один раз — согласитесь. Обработчик запускает <b>nfsw.exe</b> (а для локального сервера
+        сначала поднимает <b>NFSWorldServer.exe --offline</b>).
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" data-panel="servers">
+    <div class="panel-head"><h2><i class="fas fa-tower-broadcast"></i> Список серверов</h2></div>
+    <div class="panel-body list" id="serverList"><div class="empty small">пусто</div></div>
+    <div class="panel-foot">
+      <span class="hint"><i class="fas fa-circle-info"></i> Свои серверы хранятся в этом браузере (localStorage)</span>
+    </div>
+  </section>
+
+  <section class="panel" data-panel="help">
+    <div class="panel-head"><h2><i class="fas fa-circle-question"></i> Первый запуск</h2></div>
+    <div class="panel-body about">
+      <div class="about-row"><span>1</span><b>Запустите install.cmd из папки сервера (один раз)</b></div>
+      <div class="about-row"><span>2</span><b>Разрешите открывать dptnfsw:// в браузере</b></div>
+      <div class="about-row"><span>3</span><b>Выберите сервер и нажмите «Играть»</b></div>
+      <div class="about-row"><span>4</span><b>При первом запуске обработчик спросит nfsw.exe</b></div>
+      <div class="about-note">
+        Ручной запуск без обработчика:
+        <code>nfsw.exe US http://host:44600/Engine.svc a 1</code>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<script src="../assets/js/ui.js?v=1"></script>
+<script src="launcher.js?v=1"></script>
+</body>
+</html>

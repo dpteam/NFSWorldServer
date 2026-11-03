@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -37,6 +37,7 @@ namespace Dpt.NfsWorld.Launcher
         public string Theme = "dark";
         public bool Sound = true;
         public bool CloseOnPlay = true;
+        public string LauncherPage = "";
         public int Selected = 0;
         public List<ServerEntry> Servers = new List<ServerEntry>();
 
@@ -89,6 +90,7 @@ namespace Dpt.NfsWorld.Launcher
                         case "region": s.Region = v; break;
                         case "extraargs": s.ExtraArgs = v; break;
                         case "theme": s.Theme = v; break;
+                        case "launcherpage": s.LauncherPage = v; break;
                         case "sound": s.Sound = IsTrue(v); break;
                         case "closeonplay": s.CloseOnPlay = IsTrue(v); break;
                         case "selected": s.Selected = ParseInt(v, 0); break;
@@ -118,6 +120,7 @@ namespace Dpt.NfsWorld.Launcher
                 sb.AppendLine("region=" + Region);
                 sb.AppendLine("extraArgs=" + ExtraArgs);
                 sb.AppendLine("theme=" + Theme);
+                sb.AppendLine("launcherPage=" + LauncherPage);
                 sb.AppendLine("sound=" + (Sound ? "1" : "0"));
                 sb.AppendLine("closeOnPlay=" + (CloseOnPlay ? "1" : "0"));
                 sb.AppendLine("selected=" + Selected);

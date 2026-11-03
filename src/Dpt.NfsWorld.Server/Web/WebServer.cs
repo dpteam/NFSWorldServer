@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -351,11 +351,13 @@ namespace Dpt.NfsWorld.Web
                 ServeFile(req, resp, "/admin.html");
                 return;
             }
-            if (string.Equals(path, "/health", StringComparison.OrdinalIgnoreCase))
+            if (path == "/health" || string.Equals(path, "/health", StringComparison.OrdinalIgnoreCase))
             {
                 SendText(req, resp, 200, "ok");
                 return;
             }
+            if (path.Length > 1 && path.EndsWith("/", StringComparison.Ordinal))
+                path += "index.html";
             ServeStatic(req, resp, path);
         }
 

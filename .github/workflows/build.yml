@@ -32,6 +32,14 @@ jobs:
           "PS: " + $PSVersionTable.PSVersion
           "profiles: " + ((Get-ChildItem data\profiles -Directory).Count) + " client builds"
 
+      - name: Enable TLS 1.0 for EA-Chat (CI host)
+        shell: powershell
+        # GitHub runners are admin, so SCHANNEL can be switched without UAC.
+        # The 2010/2011 client only speaks TLS 1.0; the XMPP suite skips itself
+        # when this is unavailable, so a failure here is not fatal.
+        continue-on-error: true
+        run: .\tools\enable-tls10.ps1 -NoPause
+
       - name: Build and test
         shell: powershell
         run: .\tools\ci-test.ps1

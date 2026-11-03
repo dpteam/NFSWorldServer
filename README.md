@@ -56,16 +56,18 @@ relay    44610  <-- UDP-релей для NAT hairpin / CGNAT             (UDP)
 - Темы `light` / `dark` / `oled`, мягкие WebAudio-звуки (синтез, без файлов), поиск,
   автообновление, всё живёт на localStorage.
 
-**Лаунчер (`NFSWorldLauncher.exe`, MSHTML)**
-- Список серверов: «Локальный сервер» (поднимает `NFSWorldServer.exe --offline`) и
-  `DPT.Server (домен)`; свои серверы добавляются кнопкой «+», удаляются «×», выбор
-  сохраняется в `launcher.ini`.
-- Локальный режим: отдельные порты (44620–44630), свой state в `data/offline`, loopback-only —
-  можно играть оффлайн, не мешая публичному серверу.
-- Проверка сервера асинхронная (не блокирует окно), статус, онлайн, новости, сервисы.
-- Путь к `nfsw.exe`, регион, доп. аргументы; **Играть** запускает
+**Лаунчер (`NFSWorldLauncher.exe`, без окна)**
+- Работает как обработчик протокола `dptnfsw://`: `dptnfsw://play?server=<url>&local=0|1`
+  находит `nfsw.exe`, при локальном режиме сначала поднимает `NFSWorldServer.exe --offline`
+  (порты 44620+, state в `data/offline`), затем запускает
   `nfsw.exe US http://host:44600/Engine.svc a 1`.
-- Настройки пишутся на каждое изменение (и в `launcher.log` видно, что и когда сохранилось).
+- Установка один раз: `install-launcher.cmd` (или `NFSWorldLauncher.exe --install`),
+  пишет только `HKCU\Software\Classes\dptnfsw`, без админа.
+- Веб-страница лаунчера — `/launcher/` на публичной доске: список серверов (localStorage),
+  добавление/удаление, кнопка «Играть» (ссылка `dptnfsw://…`), проверка сервера.
+- Никакого MSHTML/WebBrowser и COM-моста — именно они давали «мёртвые» кнопки.
+- Диагностика: `launcher.log` рядом с exe; `--selftest` проверяет настройки, разбор
+  `dptnfsw://`, нормализацию URL и аргументы запуска.
 
 **Надёжность**
 - Supervisor перезапускает engine/XMPP/relay/обе доски с экспоненциальным backoff.
@@ -84,7 +86,7 @@ run.cmd
 1. Публичная доска: `http://localhost:44601/`
 2. Админка: `http://localhost:44602/` → токен из `bin\config.ini` (`web.adminToken`),
    при первом запуске генерируется и печатается в консоль.
-3. Лаунчер: `bin\NFSWorldLauncher.exe` (или `launcher.cmd`).
+3. Лаунчер: `install-launcher.cmd` один раз → `http://<host>:44601/launcher/` → «Играть».
 
 ### Оффлайн-режим
 
@@ -227,9 +229,8 @@ src/Dpt.NfsWorld.Server/
   Web/WebServer.cs                  доски, статика, прокси, rate limit, токен
   Web/WebApi.cs                     JSON API (публичный/админский)
 src/Dpt.NfsWorld.Launcher/
-  Program.cs / LauncherForm.cs      MSHTML-лаунчер, мост window.external
-  Assets/ui.html, theme.css, app.js ресурсы, вшитые в exe
-public/                             доски: index.html, admin.html, assets
+  Program.cs                        dptnfsw:// handler (game + offline server)
+public/                             boards: index.html, admin.html, launcher/, assets
 data/profiles/                      деревья клиентских сборок (см. docs/VERSIONS.md)
 data/certs/xmpp.pfx                 самоподписанный TLS для EA-Chat
 tools/firewall.ps1/.cmd             правила Windows Firewall
@@ -261,7 +262,7 @@ docs/                               архитектура, протокол, в
 - Windows XP SP3 + .NET Framework 4.0 — целевая среда (только API 4.0, C# 4).
 - Windows 7/10/11 — работает на .NET 4.8 (тот же CLR 4.0).
 - Браузер: любой современный (CSS-переменные, ES5-скрипты, CSP без inline-скриптов).
-- Лаунчер: MSHTML/IE11, включается через HKCU FeatureControl (без админа).
+- Launcher: no window, registers dptnfsw:// in HKCU (no admin); the UI is a normal web page.
 
 ## Решение проблем
 

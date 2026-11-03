@@ -135,3 +135,7 @@ table.players .sub { display: block; font-size: 10px; color: var(--muted); font-
   .columns { flex-direction: column; }
   .col-main, .col-side { width: 100%; }
 }
+/* server picker row (launcher page) */
+.srv-row { display: flex; gap: 6px; align-items: stretch; }
+.srv-row select { flex: 1 1 auto; min-width: 0; }
+.srv-row .btn { flex: none; padding: 0 10px; display: inline-flex; align-items: center; justify-content: center; }

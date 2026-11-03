@@ -25,7 +25,7 @@ if exist "%OUT%\sources.rsp" del "%OUT%\sources.rsp"
 for /r "%SRV%" %%f in (*.cs) do echo "%%f">>"%OUT%\sources.rsp"
 
 echo [2/6] compiling server with %CSC%
-"%CSC%" /nologo /target:exe /platform:anycpu /langversion:4 /optimize+ /debug:pdbonly ^
+"%CSC%" /nologo /target:exe /platform:anycpu /langversion:4 /optimize+ /debug:pdbonly /codepage:65001 ^
   /warn:3 /define:TRACE ^
   /out:"%OUT%\NFSWorldServer.exe" ^
   /reference:System.dll /reference:System.Core.dll /reference:System.Xml.dll ^
@@ -42,15 +42,12 @@ echo [3/6] collecting launcher sources...
 if exist "%OUT%\launcher.rsp" del "%OUT%\launcher.rsp"
 for /r "%LCH%" %%f in (*.cs) do echo "%%f">>"%OUT%\launcher.rsp"
 
-echo [4/6] compiling launcher (MSHTML / WinForms WebBrowser)
-"%CSC%" /nologo /target:winexe /platform:anycpu /langversion:4 /optimize+ /debug:pdbonly ^
+echo [4/6] compiling launcher (dptnfsw:// protocol handler, no UI)
+"%CSC%" /nologo /target:winexe /platform:anycpu /langversion:4 /optimize+ /debug:pdbonly /codepage:65001 ^
   /warn:3 /define:TRACE ^
   /out:"%OUT%\NFSWorldLauncher.exe" ^
   /reference:System.dll /reference:System.Core.dll /reference:System.Xml.dll ^
   /reference:System.Drawing.dll /reference:System.Windows.Forms.dll ^
-  /resource:"%LCH%\Assets\ui.html",LauncherUi.html ^
-  /resource:"%LCH%\Assets\theme.css",LauncherTheme.css ^
-  /resource:"%LCH%\Assets\app.js",LauncherApp.js ^
   @"%OUT%\launcher.rsp"
 
 if errorlevel 1 (

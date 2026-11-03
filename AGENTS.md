@@ -69,7 +69,7 @@ powershell -File tools\ci-test.ps1     :: всё сразу
 | `Copy-Item -LiteralPath "$dir\*"` копирует пустоту | `-Path` для wildcard, `-LiteralPath` для точных путей |
 | Профиль без `Engine.svc` | допустим, если в нём есть файлы; иначе игнорируется |
 | `bin\config.ini` остаётся от прошлых прогонов | токен в нём стабилен; тесты читают именно его |
-| Лаунчер в IE7-режиме | `BrowserEmulation.Install()` пишет HKCU FeatureControl |
+| Лаунчер в IE7-режиме | больше не актуально: лаунчер без окна (`dptnfsw://`), UI — веб-страница `/launcher/` |
 
 ## Definition of done
 
