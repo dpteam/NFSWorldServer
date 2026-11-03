@@ -1,16 +1,20 @@
 # AGENTS.md — правила для агентов и людей
 
-Проект: **DPT.Server / NFS World**. Один репозиторий, два exe, без зависимостей.
+Проект: **DPT.Server / NFS World**. Один репозиторий, два exe: сервер без зависимостей,
+лаунчер на WebView2.
 
 ## Жёсткие ограничения
 
-1. **.NET Framework 4.0 / C# 4.** Никаких `async/await`, `?.`, `$"..."`, `nameof`,
+1. **Сервер: .NET Framework 4.0 / C# 4.** Никаких `async/await`, `?.`, `$"..."`, `nameof`,
    tuple, `Span`, `System.Text.Json`, `HttpClient`, `CertificateRequest`.
    Компилятор — стоковый `csc.exe` с `/langversion:4`.
-2. **Никаких сторонних библиотек, NuGet, MSBuild, app.config.** Только BCL:
+2. **Сервер: никаких сторонних библиотек, NuGet, MSBuild, app.config.** Только BCL:
    `System`, `System.Core`, `System.Xml`, `System.Drawing`, `System.Windows.Forms`.
-3. **Windows XP SP3 должен работать.** Не использовать API, появившиеся после 4.0
-   (проверяйте по `mscorlib` 4.0, а не по своей машине с 4.8).
+   Исключение ровно одно — **лаунчер**: WebView2 SDK из `lib/webview2` (managed DLL,
+   подключается как `/reference`, качается `tools\fetch-webview2.ps1`). Ничего другого.
+3. **Сервер: Windows XP SP3 должен работать.** Не использовать API, появившиеся после 4.0
+   (проверяйте по `mscorlib` 4.0, а не по своей машине с 4.8). Лаунчер — .NET 4.8 / x64,
+   на XP не рассчитан, но сервер без него обязан жить.
 4. **Данные вместо кода.** Отличия версий клиента живут в `data/profiles/<id>/`,
    а не в `if (version == ...)`. Новый endpoint — тоже по возможности файл профиля.
 
@@ -69,7 +73,11 @@ powershell -File tools\ci-test.ps1     :: всё сразу
 | `Copy-Item -LiteralPath "$dir\*"` копирует пустоту | `-Path` для wildcard, `-LiteralPath` для точных путей |
 | Профиль без `Engine.svc` | допустим, если в нём есть файлы; иначе игнорируется |
 | `bin\config.ini` остаётся от прошлых прогонов | токен в нём стабилен; тесты читают именно его |
-| Лаунчер в IE7-режиме | больше не актуально: лаунчер без окна (`dptnfsw://`), UI — веб-страница `/launcher/` |
+| Лаунчер в IE7-режиме | не актуально: UI — WebView2 (Chromium), а не MSHTML. Режим эмуляции больше не нужен |
+| Лаунчер: кнопки «мертвы», `window.external` не отвечает | не возвращать MSHTML/COM-мост: только `chrome.webview.postMessage` |
+| Лаунчер: «нет связи», хотя сервер жив | health спрашивается на **игровом** порту (`/api/health` в `EngineRouter`), не на 44601 |
+| `build.cmd` не находит WebView2 SDK | `powershell -File tools\fetch-webview2.ps1` (кладёт DLL в `lib\webview2`) |
+| `CS0016` при сборке | запущены `NFSWorldServer.exe` / `NFSWorldLauncher.exe` — закройте процессы |
 
 ## Definition of done
 

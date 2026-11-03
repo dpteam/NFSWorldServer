@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
-using System.IO;
-using System.Net;
 using System.Text;
 using System.Threading;
 using System.Windows.Forms;
@@ -9,14 +6,12 @@ using System.Windows.Forms;
 namespace Dpt.NfsWorld.Launcher
 {
     /// <summary>
-    /// Windowless launcher. It is registered as the dptnfsw:// protocol handler and
-    /// only starts the game (and, for the local profile, the offline server).
-    /// The UI lives in the web board (/launcher/), which removes MSHTML from the
-    /// equation entirely - no WebBrowser control, no COM bridge, no dead buttons.
+    /// Entry point. Two ways in:
+    ///   * dptnfsw://play?...  - protocol handler, starts the game (and the offline server)
+    ///   * no arguments        - opens the WebView2 launcher window
     /// </summary>
     internal static class Program
     {
-        public const string VersionString = "0.3.0";
         public const string Scheme = "dptnfsw";
 
         [STAThread]
@@ -31,17 +26,18 @@ namespace Dpt.NfsWorld.Launcher
                 if (string.Equals(mode, "--parse", StringComparison.OrdinalIgnoreCase) && args.Length > 1)
                     return ParseOnly(args[1]);
 
+                Application.EnableVisualStyles();
+                Application.SetCompatibleTextRenderingDefault(false);
+
                 if (mode.StartsWith(Scheme + "://", StringComparison.OrdinalIgnoreCase))
                     return RunProtocol(mode);
 
-                // no arguments: make sure the handler exists, then open the web launcher
-                Install(true);
-                OpenLauncherPage();
+                Application.Run(new LauncherForm());
                 return 0;
             }
             catch (Exception ex)
             {
-                LogLine("FATAL: " + ex);
+                LaunchService.Log("FATAL: " + ex);
                 MessageBox.Show("DPT.Server Launcher:\r\n" + ex.Message, "DPT.Server Launcher",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return 1;
@@ -61,7 +57,7 @@ namespace Dpt.NfsWorld.Launcher
             public bool Local;
         }
 
-        internal static LaunchRequest ParseProtocol(string raw)
+        public static LaunchRequest ParseProtocol(string raw)
         {
             LaunchRequest r = new LaunchRequest();
             r.Raw = raw ?? "";
@@ -96,99 +92,56 @@ namespace Dpt.NfsWorld.Launcher
             return r;
         }
 
-        internal static string NormalizeServerUrl(string serverUrl)
-        {
-            string url = (serverUrl ?? "").Trim();
-            if (url.Length == 0) url = LauncherSettings.DefaultLocalUrl;
-            if (url.IndexOf("://", StringComparison.Ordinal) < 0) url = "http://" + url;
-            url = url.TrimEnd('/');
-            int svc = url.IndexOf("/Engine.svc", StringComparison.OrdinalIgnoreCase);
-            if (svc >= 0) url = url.Substring(0, svc);
-            return url;
-        }
-
-        internal static string BuildGameArgs(string engineUrl, string region, string extraArgs)
-        {
-            string args = (string.IsNullOrEmpty(region) ? "US" : region.Trim().ToUpperInvariant()) +
-                          " " + engineUrl + " a 1";
-            if (!string.IsNullOrEmpty(extraArgs)) args += " " + extraArgs.Trim();
-            return args;
-        }
-
         private static int RunProtocol(string raw)
         {
-            LaunchRequest r = ParseProtocol(raw);
+            LaunchRequest req = ParseProtocol(raw);
             LauncherSettings settings = LauncherSettings.Load();
-            LogLine("protocol: " + r.Action + " server=" + r.Server + " local=" + r.Local);
+            LaunchService.Log("protocol: " + req.Action + " server=" + req.Server + " local=" + req.Local);
 
-            if (r.Action != "play" && r.Action != "launch")
+            if (req.Action != "play" && req.Action != "launch")
             {
-                LogLine("unknown action: " + r.Action);
+                LaunchService.Log("unknown action: " + req.Action);
                 return 2;
             }
 
-            string server = NormalizeServerUrl(r.Server);
-            bool local = r.Local || IsLoopback(server);
+            LaunchService.PlayResult result = LaunchService.Launch(
+                req.Server,
+                string.IsNullOrEmpty(req.GamePath) ? settings.GamePath : req.GamePath,
+                req.Region, req.ExtraArgs, req.Local);
 
-            if (local)
+            if (result.NeedGamePath)
             {
-                if (!IsHealthy(server, 2500))
-                {
-                    string started = StartOfflineServer();
-                    LogLine("offline server: " + started);
-                    if (!WaitHealthy(server, 30000))
-                    {
-                        MessageBox.Show("Локальный сервер не поднялся за 30 секунд.\r\nЗапустите NFSWorldServer.exe --offline вручную и посмотрите его консоль.",
-                            "DPT.Server Launcher", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                        return 3;
-                    }
-                }
-            }
-            else if (!IsHealthy(server, 4000))
-            {
-                MessageBox.Show("Сервер " + server + " не отвечает.\r\nПроверьте адрес (порт игрового endpoint — 44600) и попробуйте снова.",
-                    "DPT.Server Launcher", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return 4;
-            }
-
-            string exe = ResolveGame(string.IsNullOrEmpty(r.GamePath) ? settings.GamePath : r.GamePath, true);
-            if (exe == null)
-            {
-                LogLine("nfsw.exe not found, asking the user");
                 using (OpenFileDialog dlg = new OpenFileDialog())
                 {
                     dlg.Title = "Выберите nfsw.exe (Need For Speed World)";
                     dlg.Filter = "Need For Speed World (nfsw.exe)|nfsw.exe|Программы (*.exe)|*.exe|Все файлы (*.*)|*.*";
                     dlg.CheckFileExists = true;
                     if (dlg.ShowDialog() != DialogResult.OK) return 5;
-                    exe = dlg.FileName;
+                    settings.GamePath = dlg.FileName;
+                    settings.Save();
+                    LaunchService.Log("game path saved: " + dlg.FileName);
                 }
-                settings.GamePath = exe;
-                settings.Save();
-                LogLine("game path saved: " + exe);
+                result = LaunchService.Launch(req.Server, settings.GamePath, req.Region, req.ExtraArgs, req.Local);
             }
 
-            string engine = server + "/Engine.svc";
-            string args = BuildGameArgs(engine, r.Region, r.ExtraArgs);
-            ProcessStartInfo psi = new ProcessStartInfo(exe, args);
-            psi.WorkingDirectory = Path.GetDirectoryName(exe);
-            psi.UseShellExecute = true;
-            Process p = Process.Start(psi);
-            LogLine("launched pid " + (p == null ? "?" : p.Id.ToString()) + ": " + exe + " " + args);
-
-            settings.ServerUrl = server;
+            if (!result.Ok)
+            {
+                MessageBox.Show(result.Message, "DPT.Server Launcher", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return 4;
+            }
+            settings.ServerUrl = result.Server;
             settings.Save();
             return 0;
         }
 
         // ------------------------------------------------------------- registry
 
-        internal static string CommandValue()
+        public static string CommandValue()
         {
             return "\"" + Application.ExecutablePath + "\" \"%1\"";
         }
 
-        internal static bool IsInstalled()
+        public static bool IsInstalled()
         {
             try
             {
@@ -210,14 +163,11 @@ namespace Dpt.NfsWorld.Launcher
                 try
                 {
                     Microsoft.Win32.Registry.CurrentUser.DeleteSubKeyTree(@"Software\Classes\" + Scheme, false);
-                    LogLine("protocol handler removed");
+                    LaunchService.Log("protocol handler removed");
                     MessageBox.Show(Scheme + ":// больше не открывает лаунчер.", "DPT.Server Launcher",
                         MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
-                catch (Exception ex)
-                {
-                    LogLine("uninstall failed: " + ex.Message);
-                }
+                catch (Exception ex) { LaunchService.Log("uninstall failed: " + ex.Message); }
                 return 0;
             }
 
@@ -232,171 +182,15 @@ namespace Dpt.NfsWorld.Launcher
                     using (Microsoft.Win32.RegistryKey cmd = root.CreateSubKey(@"shell\open\command"))
                         cmd.SetValue(null, CommandValue());
                 }
-                LogLine("protocol handler installed: " + Scheme + ":// -> " + Application.ExecutablePath);
+                LaunchService.Log("protocol handler installed: " + Scheme + ":// -> " + Application.ExecutablePath);
                 return 0;
             }
             catch (Exception ex)
             {
-                LogLine("install failed: " + ex.Message);
+                LaunchService.Log("install failed: " + ex.Message);
                 MessageBox.Show("Не удалось зарегистрировать " + Scheme + "://\r\n" + ex.Message,
                     "DPT.Server Launcher", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return 1;
-            }
-        }
-
-        // --------------------------------------------------------------- server
-
-        private static bool IsLoopback(string serverUrl)
-        {
-            try
-            {
-                Uri u = new Uri(serverUrl);
-                return u.IsLoopback || u.Host == "localhost";
-            }
-            catch { return false; }
-        }
-
-        private static bool IsHealthy(string baseUrl, int timeoutMs)
-        {
-            try
-            {
-                string body = HttpGet(baseUrl + "/api/health", timeoutMs);
-                return body.IndexOf("\"ok\":true", StringComparison.OrdinalIgnoreCase) >= 0;
-            }
-            catch { return false; }
-        }
-
-        private static bool WaitHealthy(string baseUrl, int timeoutMs)
-        {
-            DateTime deadline = DateTime.UtcNow.AddMilliseconds(timeoutMs);
-            while (DateTime.UtcNow < deadline)
-            {
-                if (IsHealthy(baseUrl, 1500)) return true;
-                Thread.Sleep(400);
-            }
-            return false;
-        }
-
-        private static string StartOfflineServer()
-        {
-            string exe = FindServerExe();
-            if (exe == null) return "NFSWorldServer.exe не найден рядом с лаунчером";
-            try
-            {
-                ProcessStartInfo psi = new ProcessStartInfo(exe, "--offline");
-                psi.WorkingDirectory = Path.GetDirectoryName(exe);
-                psi.UseShellExecute = true;
-                Process p = Process.Start(psi);
-                return "started pid " + (p == null ? "?" : p.Id.ToString());
-            }
-            catch (Exception ex)
-            {
-                return "ошибка запуска: " + ex.Message;
-            }
-        }
-
-        private static string FindServerExe()
-        {
-            string baseDir = AppDomain.CurrentDomain.BaseDirectory;
-            string[] candidates = new string[]
-            {
-                Path.Combine(baseDir, "NFSWorldServer.exe"),
-                Path.Combine(baseDir, "..", "NFSWorldServer.exe"),
-                Path.Combine(baseDir, "..", "bin", "NFSWorldServer.exe"),
-                Path.Combine(baseDir, "server", "NFSWorldServer.exe")
-            };
-            for (int i = 0; i < candidates.Length; i++)
-            {
-                try
-                {
-                    string full = Path.GetFullPath(candidates[i]);
-                    if (File.Exists(full)) return full;
-                }
-                catch { }
-            }
-            return null;
-        }
-
-        private static string ResolveGame(string gamePath, bool askUserIfMissing)
-        {
-            if (string.IsNullOrEmpty(gamePath)) gamePath = "nfsw\\nfsw.exe";
-            string[] candidates;
-            if (Path.IsPathRooted(gamePath))
-            {
-                candidates = new string[] { gamePath };
-            }
-            else
-            {
-                string baseDir = AppDomain.CurrentDomain.BaseDirectory;
-                candidates = new string[]
-                {
-                    Path.Combine(baseDir, gamePath),
-                    Path.Combine(baseDir, "..", "nfsw", "nfsw.exe"),
-                    Path.Combine(baseDir, "..", "..", "nfsw", "nfsw.exe"),
-                    Path.Combine(baseDir, "nfsw.exe"),
-                    @"C:\Program Files (x86)\Electronic Arts\Need For Speed World\nfsw.exe",
-                    @"C:\Program Files\Electronic Arts\Need For Speed World\nfsw.exe"
-                };
-            }
-            for (int i = 0; i < candidates.Length; i++)
-            {
-                try
-                {
-                    string full = Path.GetFullPath(candidates[i]);
-                    if (File.Exists(full)) return full;
-                }
-                catch { }
-            }
-            return null;
-        }
-
-        // ------------------------------------------------------------------ misc
-
-        internal static string HttpGet(string url, int timeoutMs)
-        {
-            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
-            HttpWebRequest req = (HttpWebRequest)WebRequest.Create(url);
-            req.Method = "GET";
-            req.Timeout = timeoutMs;
-            req.ReadWriteTimeout = timeoutMs;
-            req.UserAgent = "DPT.Server-Launcher/" + VersionString;
-            req.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
-            req.Proxy = null;
-            using (HttpWebResponse resp = (HttpWebResponse)req.GetResponse())
-            using (Stream s = resp.GetResponseStream())
-            using (StreamReader r = new StreamReader(s, Encoding.UTF8))
-                return r.ReadToEnd();
-        }
-
-        internal static void LogLine(string text)
-        {
-            try
-            {
-                string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "launcher.log");
-                FileInfo fi = new FileInfo(path);
-                if (fi.Exists && fi.Length > 512 * 1024) { try { File.Delete(path); } catch { } }
-                File.AppendAllText(path, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff") + "  " + (text ?? "") + "\r\n",
-                    new UTF8Encoding(false));
-            }
-            catch { }
-        }
-
-        private static void OpenLauncherPage()
-        {
-            LauncherSettings s = LauncherSettings.Load();
-            string page = s.LauncherPage;
-            if (string.IsNullOrEmpty(page))
-                page = NormalizeServerUrl(s.ServerUrl).Replace(":44600", ":44601") + "/launcher/";
-            try
-            {
-                Process.Start(new ProcessStartInfo(page) { UseShellExecute = true });
-                LogLine("opened launcher page: " + page);
-            }
-            catch (Exception ex)
-            {
-                LogLine("cannot open launcher page: " + ex.Message);
-                MessageBox.Show("Откройте в браузере:\r\n" + page, "DPT.Server Launcher",
-                    MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
         }
 
@@ -404,13 +198,13 @@ namespace Dpt.NfsWorld.Launcher
 
         private static int SelfTest()
         {
-            LogLine("selftest run");
+            LaunchService.Log("selftest run");
             StringBuilder report = new StringBuilder();
             int failures = 0;
 
             string path = LauncherSettings.FilePath;
-            bool existed = File.Exists(path);
-            string backup = existed ? File.ReadAllText(path, Encoding.UTF8) : null;
+            bool existed = System.IO.File.Exists(path);
+            string backup = existed ? System.IO.File.ReadAllText(path, Encoding.UTF8) : null;
             try
             {
                 LauncherSettings s = new LauncherSettings();
@@ -423,7 +217,7 @@ namespace Dpt.NfsWorld.Launcher
                 s.Save();
 
                 LauncherSettings back = LauncherSettings.Load();
-                Check(report, ref failures, "settings file exists", File.Exists(path), path);
+                Check(report, ref failures, "settings file exists", System.IO.File.Exists(path), path);
                 Check(report, ref failures, "serverUrl round-trip", back.ServerUrl == s.ServerUrl, back.ServerUrl);
                 Check(report, ref failures, "gamePath round-trip", back.GamePath == s.GamePath, back.GamePath);
                 Check(report, ref failures, "region round-trip", back.Region == "EU", back.Region);
@@ -440,12 +234,30 @@ namespace Dpt.NfsWorld.Launcher
                 Check(report, ref failures, "protocol without scheme", r2.Server == "nfsw.dartpower.xyz", r2.Server);
                 Check(report, ref failures, "protocol extra args", r2.ExtraArgs == "-debug", r2.ExtraArgs);
 
-                Check(report, ref failures, "normalize bare host", NormalizeServerUrl("nfsw.dartpower.xyz") == "http://nfsw.dartpower.xyz", "");
-                Check(report, ref failures, "normalize Engine.svc", NormalizeServerUrl("http://h:44600/Engine.svc") == "http://h:44600", "");
-                Check(report, ref failures, "args built", BuildGameArgs("http://h:44600/Engine.svc", "US", "") == "US http://h:44600/Engine.svc a 1", BuildGameArgs("http://h:44600/Engine.svc", "US", ""));
+                Check(report, ref failures, "normalize bare host", LaunchService.NormalizeServerUrl("nfsw.dartpower.xyz") == "http://nfsw.dartpower.xyz", "");
+                Check(report, ref failures, "normalize Engine.svc", LaunchService.NormalizeServerUrl("http://h:44600/Engine.svc") == "http://h:44600", "");
+                Check(report, ref failures, "args built",
+                      LaunchService.BuildGameArgs("http://h:44600/Engine.svc", "US", "") == "US http://h:44600/Engine.svc a 1",
+                      LaunchService.BuildGameArgs("http://h:44600/Engine.svc", "US", ""));
                 Check(report, ref failures, "registry command quoted", CommandValue().Contains("%1") && CommandValue().StartsWith("\""), CommandValue());
                 Check(report, ref failures, "protocol registered or installable", true, IsInstalled() ? "installed" : "not installed (--install)");
-                Check(report, ref failures, "launcher.log written", File.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "launcher.log")), "");
+
+                string wv2 = "missing";
+                try { wv2 = Microsoft.Web.WebView2.Core.CoreWebView2Environment.GetAvailableBrowserVersionString(); }
+                catch (Exception wex) { wv2 = "missing (" + wex.Message + ")"; }
+                Check(report, ref failures, "WebView2 runtime", true, wv2);
+
+                // the window is a blank white rectangle without these three
+                string markup = LauncherForm.Resource("LauncherUi.html");
+                string style = LauncherForm.Resource("LauncherTheme.css");
+                string script = LauncherForm.Resource("LauncherApp.js");
+                Check(report, ref failures, "ui.html embedded", markup.Length > 500, markup.Length + " chars");
+                Check(report, ref failures, "theme.css embedded", style.Length > 500, style.Length + " chars");
+                Check(report, ref failures, "app.js talks to the host",
+                      script.IndexOf("chrome.webview", StringComparison.Ordinal) >= 0, script.Length + " chars");
+
+                Check(report, ref failures, "launcher.log written",
+                      System.IO.File.Exists(System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "launcher.log")), "");
             }
             catch (Exception ex)
             {
@@ -454,13 +266,13 @@ namespace Dpt.NfsWorld.Launcher
             }
             finally
             {
-                if (backup != null) File.WriteAllText(path, backup, new UTF8Encoding(false));
-                else { try { File.Delete(path); } catch { } }
+                if (backup != null) System.IO.File.WriteAllText(path, backup, new UTF8Encoding(false));
+                else { try { System.IO.File.Delete(path); } catch { } }
             }
 
-            string outPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "launcher-selftest.txt");
+            string outPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "launcher-selftest.txt");
             report.AppendLine(failures == 0 ? "RESULT: ok" : "RESULT: " + failures + " failed");
-            try { File.WriteAllText(outPath, report.ToString(), new UTF8Encoding(false)); } catch { }
+            try { System.IO.File.WriteAllText(outPath, report.ToString(), new UTF8Encoding(false)); } catch { }
             return failures == 0 ? 0 : 1;
         }
 
@@ -474,10 +286,10 @@ namespace Dpt.NfsWorld.Launcher
         {
             LaunchRequest r = ParseProtocol(raw);
             Console.WriteLine("action=" + r.Action);
-            Console.WriteLine("server=" + NormalizeServerUrl(r.Server));
+            Console.WriteLine("server=" + LaunchService.NormalizeServerUrl(r.Server));
             Console.WriteLine("region=" + r.Region);
             Console.WriteLine("local=" + (r.Local ? "1" : "0"));
-            Console.WriteLine("args=" + BuildGameArgs(NormalizeServerUrl(r.Server) + "/Engine.svc", r.Region, r.ExtraArgs));
+            Console.WriteLine("args=" + LaunchService.BuildGameArgs(LaunchService.NormalizeServerUrl(r.Server) + "/Engine.svc", r.Region, r.ExtraArgs));
             return 0;
         }
     }

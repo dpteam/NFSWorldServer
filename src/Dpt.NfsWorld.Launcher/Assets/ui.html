@@ -1,0 +1,138 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>DPT.Server Launcher</title>
+<!--THEME-->
+</head>
+<body class="dark">
+
+<div class="shell">
+
+  <div class="hero">
+    <div class="logo">DPT</div>
+    <div class="hero-text">
+      <div class="hero-title">DPT.Server</div>
+      <div class="hero-sub">Need For Speed World</div>
+    </div>
+    <div class="hero-right">
+      <span class="pill" id="statusPill"><span class="dot" id="statusDot"></span> <span id="statusText">проверка…</span></span>
+      <span class="pill dim" id="versionPill">v{{VERSION}}</span>
+    </div>
+  </div>
+
+  <div class="cols">
+    <div class="col-main">
+
+      <div class="card">
+        <div class="card-head">Сервер</div>
+        <div class="card-body">
+          <label class="lbl" for="serverSel">Выберите сервер</label>
+          <div class="srv-row">
+            <select id="serverSel"></select>
+            <button type="button" id="btnAddServer" class="btn small" title="Добавить свой сервер">+</button>
+            <button type="button" id="btnDelServer" class="btn small" title="Удалить выбранный">×</button>
+          </div>
+
+          <label class="lbl" for="serverUrl" style="margin-top:9px">Адрес</label>
+          <input id="serverUrl" type="text" spellcheck="false" placeholder="http://nfsw.dartpower.xyz:44600">
+          <div class="hint" id="serverHint">Локальный режим поднимет свой сервер (порты 44620+, data\offline).</div>
+
+          <div class="row" style="margin-top:8px">
+            <div class="grow">
+              <label class="lbl" for="region">Регион</label>
+              <select id="region">
+                <option value="US">US</option>
+                <option value="EU">EU</option>
+                <option value="WORLD">WORLD</option>
+              </select>
+            </div>
+            <div class="grow">
+              <label class="lbl" for="extraArgs">Доп. аргументы</label>
+              <input id="extraArgs" type="text" spellcheck="false" placeholder="необязательно">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">Игра</div>
+        <div class="card-body">
+          <label class="lbl" for="gamePath">nfsw.exe</label>
+          <div class="row">
+            <input id="gamePath" class="grow" type="text" spellcheck="false" placeholder="nfsw\nfsw.exe">
+            <button type="button" id="btnBrowse" class="btn">Обзор…</button>
+          </div>
+          <div class="hint" id="gameHint">Можно оставить относительный путь, если папка игры рядом с лаунчером.</div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button type="button" id="btnPlay" class="btn primary big">&#9654; Играть</button>
+        <button type="button" id="btnCheck" class="btn">Проверить</button>
+        <button type="button" id="btnSave" class="btn">Сохранить</button>
+        <button type="button" id="btnSite" class="btn">Веб-морда</button>
+      </div>
+
+      <div class="log" id="log"></div>
+
+    </div>
+
+    <div class="col-side">
+
+      <div class="card">
+        <div class="card-head">Статус сервера</div>
+        <div class="card-body">
+          <table class="kv">
+            <tr><td>игроков онлайн</td><td id="kOnline" class="v">-</td></tr>
+            <tr><td>персонажей</td><td id="kPersonas" class="v">-</td></tr>
+            <tr><td>комнат relay</td><td id="kRooms" class="v">-</td></tr>
+            <tr><td>uptime</td><td id="kUptime" class="v">-</td></tr>
+            <tr><td>build</td><td id="kVersion" class="v">-</td></tr>
+          </table>
+          <div class="sep"></div>
+          <div class="svc-row">
+            <span class="svc" id="svcEngine">engine</span>
+            <span class="svc" id="svcXmpp">chat</span>
+            <span class="svc" id="svcRelay">relay</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">Новости</div>
+        <div class="card-body news" id="newsBox">
+          <div class="news-item">
+            <div class="news-title">Добро пожаловать в DPT.Server</div>
+            <div class="news-body">Выберите сервер и нажмите «Играть». Для локального режима
+              лаунчер сам поднимет сервер с отдельными сохранениями.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">Опции</div>
+        <div class="card-body">
+          <label class="check"><input id="optSound" type="checkbox" checked> звуки</label>
+          <label class="check"><input id="optClose" type="checkbox" checked> закрывать лаунчер при старте игры</label>
+          <div class="sep"></div>
+          <div class="row">
+            <button type="button" id="btnTheme" class="btn small">Тема</button>
+            <button type="button" id="btnHandler" class="btn small" title="Зарегистрировать dptnfsw:// для браузера">dptnfsw://</button>
+            <button type="button" id="btnQuit" class="btn small">Выход</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="footer">
+    <span>DPT.Server launcher · WebView2 · .NET 4.8</span>
+    <span id="connLabel" class="dim">ещё не проверяли</span>
+  </div>
+</div>
+
+<!--APP-->
+</body>
+</html>

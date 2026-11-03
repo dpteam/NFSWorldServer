@@ -39,6 +39,16 @@ namespace Dpt.NfsWorld.Engine
 
             try
             {
+                // -------------------------------------------------- launcher probe
+                // Only the engine port is forwarded through the router, so the
+                // launcher asks *this* port whether the server is alive. Same
+                // shape as the public board, without a single private field.
+                if (lower == "/api/health" || lower == "/api/status")
+                {
+                    SendJson(res, ProbeJson(lower == "/api/status"));
+                    return;
+                }
+
                 // ------------------------------------------------------- account
                 if (lower == "/user/authenticateuser" || lower == "/user/authenticate")
                 {
@@ -1169,6 +1179,45 @@ namespace Dpt.NfsWorld.Engine
         {
             if (body == null || body.Length == 0) return "";
             return Encoding.UTF8.GetString(body);
+        }
+
+        /// <summary>
+        /// Answer for the launcher on the engine port. Deliberately the same
+        /// document the public board returns: status counters and service flags,
+        /// nothing that could identify a player or a machine.
+        /// </summary>
+        private string ProbeJson(bool full)
+        {
+            JsonBuilder j = new JsonBuilder(512);
+            j.BeginObject().Prop("ok", true).Prop("name", ServerApp.Name).Prop("version", ServerApp.Version)
+             .Prop("buildDate", ServerApp.BuildDate).Prop("uptime", _app.UptimeText)
+             .Prop("time", Util.Iso(DateTime.UtcNow)).Prop("port", (long)_cfg.EnginePort);
+            if (!full)
+            {
+                j.EndObject();
+                return j.ToString();
+            }
+            j.Prop("description", _cfg.ServerDescription).Prop("location", _cfg.ServerLocation)
+             .Prop("role", "engine").Prop("publicUrl", _cfg.PublicUrl);
+
+            j.Name("services").BeginObject();
+            j.Prop("engine", _app.Engine != null && _app.Engine.IsRunning);
+            j.Prop("xmpp", _app.Xmpp != null && _app.Xmpp.IsRunning);
+            j.Prop("xmppPort", _app.Xmpp == null ? 0 : (long)_app.Xmpp.Port);
+            j.Prop("relay", _app.Relay != null && _app.Relay.IsRunning);
+            j.Prop("relayPort", _app.Relay == null ? 0 : (long)_app.Relay.Port);
+            j.EndObject();
+
+            j.Name("counts").BeginObject();
+            j.Prop("online", (long)_sessions.Online().Count);
+            j.Prop("sessions", (long)_sessions.Count);
+            j.Prop("personas", (long)_db.AllPersonas().Count);
+            j.Prop("rooms", _app.Relay == null ? 0 : (long)_app.Relay.RoomCount);
+            j.Prop("xmppClients", _app.Xmpp == null ? 0 : (long)_app.Xmpp.Clients);
+            j.EndObject();
+
+            j.EndObject();
+            return j.ToString();
         }
 
         private static string FirstNonEmpty(params string[] values)

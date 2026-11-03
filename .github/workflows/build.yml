@@ -1,7 +1,8 @@
 name: build
 
-# Builds with the stock .NET Framework 4.x csc.exe (no NuGet, no MSBuild),
-# runs the launcher self-test, then starts the server and runs the engine,
+# Builds with the stock .NET Framework 4.x csc.exe (no NuGet, no MSBuild):
+# server = C# 4 / BCL only, launcher = .NET 4.8 + WebView2 SDK from lib/webview2.
+# Runs the launcher self-test, then starts the server and runs the engine,
 # relay and EA-Chat suites against it.
 
 on:
@@ -31,6 +32,17 @@ jobs:
           (Get-Item $csc).VersionInfo.FileVersion
           "PS: " + $PSVersionTable.PSVersion
           "profiles: " + ((Get-ChildItem data\profiles -Directory).Count) + " client builds"
+
+      - name: WebView2 SDK
+        shell: powershell
+        # The managed DLLs and the native loader are committed, but a fresh
+        # checkout without binaries (or a bumped version) downloads them here.
+        run: |
+          if (-not (Test-Path .\lib\webview2\Microsoft.Web.WebView2.Core.dll)) {
+            .\tools\fetch-webview2.ps1
+          } else {
+            "WebView2 SDK: present in lib\webview2"
+          }
 
       - name: Enable TLS 1.0 for EA-Chat (CI host)
         shell: powershell

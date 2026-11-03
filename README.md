@@ -1,8 +1,8 @@
 # DPT.Server — Need For Speed World
 
 Игровой сервер для **Need For Speed World** (2010–2011, клиент build 1613 / SoapBox 1.9.x) на
-**.NET Framework 4.0 / C# 4**, совместимый с Windows XP SP3, **без единой сторонней библиотеки**.
-Плюс две веб-морды (публичная и админская) и лаунчер на MSHTML.
+**.NET Framework 4.0 / C# 4 без единой сторонней библиотеки** для сервера, плюс лаунчер на
+**.NET 4.8 + WebView2**. Две веб-морды (публичная и админская), лаунчер и UDP-релей.
 
 ```
 engine   44600  <-- nfsw.exe ... http://host:44600/Engine.svc   (TCP)
@@ -56,18 +56,23 @@ relay    44610  <-- UDP-релей для NAT hairpin / CGNAT             (UDP)
 - Темы `light` / `dark` / `oled`, мягкие WebAudio-звуки (синтез, без файлов), поиск,
   автообновление, всё живёт на localStorage.
 
-**Лаунчер (`NFSWorldLauncher.exe`, без окна)**
-- Работает как обработчик протокола `dptnfsw://`: `dptnfsw://play?server=<url>&local=0|1`
-  находит `nfsw.exe`, при локальном режиме сначала поднимает `NFSWorldServer.exe --offline`
-  (порты 44620+, state в `data/offline`), затем запускает
-  `nfsw.exe US http://host:44600/Engine.svc a 1`.
-- Установка один раз: `install-launcher.cmd` (или `NFSWorldLauncher.exe --install`),
-  пишет только `HKCU\Software\Classes\dptnfsw`, без админа.
-- Веб-страница лаунчера — `/launcher/` на публичной доске: список серверов (localStorage),
-  добавление/удаление, кнопка «Играть» (ссылка `dptnfsw://…`), проверка сервера.
-- Никакого MSHTML/WebBrowser и COM-моста — именно они давали «мёртвые» кнопки.
+**Лаунчер (`NFSWorldLauncher.exe`, окно на WebView2)**
+- Окно-оболочка WebView2 (Chromium из Edge), UI — обычный HTML/CSS/JS внутри exe
+  как встроенный ресурс. Мост — `chrome.webview.postMessage`, без COM и без запросов
+  «разрешить приложение».
+- Список серверов (локальный/домен/свои), кнопки «Играть», «Проверить», «Веб-морда»,
+  путь к `nfsw.exe` (обзор), регион, доп. аргументы, тема, звук.
+- «Играть» проверяет сервер по `/api/health` **на игровом порту** (он же
+  единственный, что проброшен наружу), при локальном режиме сам поднимает
+  `NFSWorldServer.exe --offline` (порты 44620+, state в `data/offline`) и ждёт
+  готовности, затем запускает `nfsw.exe US http://host:44600/Engine.svc a 1`.
+- Тот же режим без окна: `dptnfsw://play?server=<url>&local=0|1` — обработчик
+  протокола для страницы `/launcher/` на публичной доске; ставится
+  `install-launcher.cmd` (или `--install`) в `HKCU\Software\Classes\dptnfsw`, без админа.
+- SDK WebView2 (managed DLL + loader) лежит в `lib/webview2/` и качается
+  `powershell -File tools\fetch-webview2.ps1`; сам Runtime ставится Edge/Windows Update.
 - Диагностика: `launcher.log` рядом с exe; `--selftest` проверяет настройки, разбор
-  `dptnfsw://`, нормализацию URL и аргументы запуска.
+  `dptnfsw://`, нормализацию URL, аргументы запуска и наличие WebView2 Runtime.
 
 **Надёжность**
 - Supervisor перезапускает engine/XMPP/relay/обе доски с экспоненциальным backoff.
@@ -82,6 +87,9 @@ relay    44610  <-- UDP-релей для NAT hairpin / CGNAT             (UDP)
 build.cmd
 run.cmd
 ```
+
+> Первая сборка лаунчера требует SDK WebView2 в `lib/webview2`. Он лежит в репозитории;
+> если папки нет (чистый клон без бинарников) — `powershell -File tools\fetch-webview2.ps1`.
 
 1. Публичная доска: `http://localhost:44601/`
 2. Админка: `http://localhost:44602/` → токен из `bin\config.ini` (`web.adminToken`),
@@ -183,15 +191,17 @@ powershell -File tools\ci-test.ps1         :: всё сразу: сборка + 
 `.github/workflows/build.yml` (GitHub Actions, `windows-latest`):
 
 1. проверяет `csc.exe` и число профилей клиентов;
-2. `tools\ci-test.ps1` — сборка → старт → engine (49 проверок) + relay (14) + XMPP (13);
-3. `NFSWorldLauncher.exe --selftest` — настройки, URL, логи (без UI);
+2. `tools\ci-test.ps1` — сборка → старт → engine (54 проверки) + relay (14) + XMPP (13);
+3. `NFSWorldLauncher.exe --selftest` — настройки, URL, логи, наличие WebView2 Runtime;
 4. смоук `--offline` — health на 44620 и создание `data\offline\state`;
 5. пакует `bin\*` в `NFSWorldServer-win.zip` без `config.ini`, `launcher.ini`, логов,
    `data\state` и `data\offline`;
 6. на теге `v*` создаёт GitHub Release и прикладывает zip.
 
 Локально всё то же: `powershell -File tools\ci-test.ps1`.
-Лаунчер без окна: `bin\NFSWorldLauncher.exe --selftest` → `bin\launcher-selftest.txt`.
+Лаунчер: `bin\NFSWorldLauncher.exe --selftest` → `bin\launcher-selftest.txt`.
+SDK WebView2 уже лежит в `lib/webview2`; обновить/восстановить —
+`powershell -File tools\fetch-webview2.ps1 -Force`.
 
 ## Логи
 
@@ -229,12 +239,18 @@ src/Dpt.NfsWorld.Server/
   Web/WebServer.cs                  доски, статика, прокси, rate limit, токен
   Web/WebApi.cs                     JSON API (публичный/админский)
 src/Dpt.NfsWorld.Launcher/
-  Program.cs                        dptnfsw:// handler (game + offline server)
+  Program.cs                        окно WebView2, dptnfsw://, --selftest/--install
+  LauncherForm.cs                   хост окна: postMessage-мост, check/play/browse
+  LaunchService.cs                  health, offline-сервер, запуск nfsw.exe, лог
+  LauncherSettings.cs               launcher.ini (серверы, путь к игре, регион, тема)
+  Assets/ui.html, theme.css, app.js UI внутри exe как встроенные ресурсы
+lib/webview2/                       SDK WebView2 (Managed + Loader), качается скриптом
 public/                             boards: index.html, admin.html, launcher/, assets
 data/profiles/                      деревья клиентских сборок (см. docs/VERSIONS.md)
 data/certs/xmpp.pfx                 самоподписанный TLS для EA-Chat
 tools/firewall.ps1/.cmd             правила Windows Firewall
 tools/make-cert.ps1                 пересоздать TLS-сертификат
+tools/fetch-webview2.ps1            скачать SDK WebView2 в lib/webview2
 tools/enable-tls10.ps1              включить TLS 1.0 в SCHANNEL (для старого клиента)
 tools/import-refs.ps1               залить данные из ..\refs в data/profiles
 tools/test-*.ps1 / ci-test.ps1      тесты
@@ -259,10 +275,12 @@ docs/                               архитектура, протокол, в
 
 ## Совместимость
 
-- Windows XP SP3 + .NET Framework 4.0 — целевая среда (только API 4.0, C# 4).
-- Windows 7/10/11 — работает на .NET 4.8 (тот же CLR 4.0).
+- **Сервер**: .NET Framework 4.0 / C# 4, Windows XP SP3 и новее (только API 4.0, без
+  сторонних библиотек). На Windows 7/10/11 работает на .NET 4.8 (тот же CLR 4.0).
+- **Лаунчер**: .NET 4.8 + WebView2, сборка `/platform:x64`. Нужен Edge WebView2 Runtime
+  (есть в Windows 11 «из коробки»; на 10 ставится одной ссылкой, см. `launcher.log`).
+  XP лаунчер не поддерживает — это цена нормального HTML UI и живых кнопок.
 - Браузер: любой современный (CSS-переменные, ES5-скрипты, CSP без inline-скриптов).
-- Launcher: no window, registers dptnfsw:// in HKCU (no admin); the UI is a normal web page.
 
 ## Решение проблем
 
@@ -276,6 +294,10 @@ docs/                               архитектура, протокол, в
 | Игра не коннектится | запускайте `nfsw.exe US http://<host>:44600/Engine.svc a 1`, порт 44600 открыт |
 | Игроки видят лобби, но не друг друга | включите UDP relay и направьте игроков в одну комнату (`docs/RELAY.md`) |
 | Нет иконок | всё локальное, CDN не нужен; проверьте, что `public/assets` скопирован в `bin\public` |
+| Лаунчер: «WebView2 не запустился» | поставьте Edge WebView2 Runtime, `launcher.log` покажет версию; XP не поддерживается |
+| Лаунчер показывает «нет связи», а сервер жив | проверьте, что открыт **44600** (health спрашивается на игровом порту, не на 44601) |
+| `build.cmd`: `WebView2 SDK missing in lib\webview2` | `powershell -File tools\fetch-webview2.ps1` |
+| `error CS0016: could not write to output file` | сервер или лаунчер запущены — закройте их и повторите сборку |
 
 ## Атрибуция
 

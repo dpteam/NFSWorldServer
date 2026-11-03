@@ -72,6 +72,16 @@ Write-Host ''
 Write-Host '=== engine: health ===' -ForegroundColor Cyan
 Check 'engine answers /heartbeat' ((HttpText "$engine/heartbeat") -match 'HeartBeat')
 
+# The launcher can only reach the engine port through the router, so the probe
+# lives there too - and it must not carry a single private field.
+$probe = HttpText "$Base/api/health"
+Check 'engine answers /api/health' ($probe -match '"ok":true') $probe
+$probeStatus = HttpText "$Base/api/status"
+Check 'engine probe reports its port' ($probeStatus -match '"port"\s*:\s*\d+')
+Check 'engine status has service flags' ($probeStatus -match '"services"' -and $probeStatus -match '"relay"')
+Check 'engine status has counters' ($probeStatus -match '"counts"' -and $probeStatus -match '"online"')
+Check 'engine status leaks no private fields' (-not ($probeStatus -match '"(ip|machineId|token|userAgent|relayTicket|accountId)"')) $probeStatus
+
 Write-Host ''
 Write-Host '=== engine: account + session ===' -ForegroundColor Cyan
 $authXml = "<AuthenticateUserRequest><userName>$user</userName><password>pw</password></AuthenticateUserRequest>"

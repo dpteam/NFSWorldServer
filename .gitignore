@@ -33,6 +33,10 @@ launcher/launcher.ini
 !data/certs/xmpp.pfx
 !data/certs/xmpp.cer
 
+# the WebView2 SDK the launcher references is fetched by tools\fetch-webview2.ps1
+# and must be present for a plain build.cmd on a fresh clone
+!lib/webview2/*.dll
+
 # keep the shipped web data, never ignore it
 !data/profiles/**/*.xml
 !data/profiles/**/*.json

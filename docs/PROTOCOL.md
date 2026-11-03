@@ -135,6 +135,22 @@ GET  /Modding/GetModInfo             -> JSON
 POST /Reporting/*, /logging/client   -> 200
 ```
 
+## Проба лаунчера (`/api/health`, `/api/status`)
+
+Лаунчеру нужен один адрес, по которому видно «сервер жив». Через роутер проброшен
+только игровой порт (`44600`), поэтому проба живёт на нём же, а не на доске `44601`:
+
+```
+GET /api/health  (без /Engine.svc)   -> {"ok":true,"name":...,"version":...,"uptime":...,"port":44600}
+GET /api/status  (без /Engine.svc)   -> {"ok":true, ..., "services":{"engine":true,"xmpp":true,"relay":true},
+                                        "counts":{"online":0,"personas":7,"rooms":0}}
+```
+
+Отдаётся тот же набор, что публичная доска: флаги сервисов, порты, счётчики. Ни `ip`,
+ни `token`, ни `machineId`, ни `userAgent` — их там нет физически (`EngineRouter.ProbeJson`),
+это проверяет `tools\test-engine.ps1`. Порт доски по соглашению — игровой +1
+(`44600 -> 44601`, оффлайн `44620 -> 44621`).
+
 ## Ответы и коды
 
 - Успешный XML — `200`, `Content-Type: application/xml; charset=utf-8`.

@@ -41,13 +41,26 @@ if errorlevel 1 (
 echo [3/6] collecting launcher sources...
 if exist "%OUT%\launcher.rsp" del "%OUT%\launcher.rsp"
 for /r "%LCH%" %%f in (*.cs) do echo "%%f">>"%OUT%\launcher.rsp"
+rem shared helpers (same source file, no duplicate project)
+echo "%ROOT%src\Dpt.NfsWorld.Server\Core\Json.cs">>"%OUT%\launcher.rsp"
 
-echo [4/6] compiling launcher (dptnfsw:// protocol handler, no UI)
-"%CSC%" /nologo /target:winexe /platform:anycpu /langversion:4 /optimize+ /debug:pdbonly /codepage:65001 ^
+if not exist "%ROOT%lib\webview2\Microsoft.Web.WebView2.Core.dll" (
+  echo [ERROR] WebView2 SDK missing in lib\webview2.
+  echo         Run: powershell -File tools\fetch-webview2.ps1
+  exit /b 1
+)
+
+echo [4/6] compiling launcher (WebView2 UI + dptnfsw:// handler)
+"%CSC%" /nologo /target:winexe /platform:x64 /langversion:5 /optimize+ /debug:pdbonly /codepage:65001 ^
   /warn:3 /define:TRACE ^
   /out:"%OUT%\NFSWorldLauncher.exe" ^
   /reference:System.dll /reference:System.Core.dll /reference:System.Xml.dll ^
   /reference:System.Drawing.dll /reference:System.Windows.Forms.dll ^
+  /reference:"%ROOT%lib\webview2\Microsoft.Web.WebView2.Core.dll" ^
+  /reference:"%ROOT%lib\webview2\Microsoft.Web.WebView2.WinForms.dll" ^
+  /resource:"%LCH%\Assets\ui.html",LauncherUi.html ^
+  /resource:"%LCH%\Assets\theme.css",LauncherTheme.css ^
+  /resource:"%LCH%\Assets\app.js",LauncherApp.js ^
   @"%OUT%\launcher.rsp"
 
 if errorlevel 1 (
@@ -60,6 +73,14 @@ echo [5/6] copying web assets and data...
 if exist "%OUT%\public" rmdir /s /q "%OUT%\public"
 xcopy "%ROOT%public" "%OUT%\public\" /E /I /Y /Q >nul
 xcopy "%ROOT%config.example.ini" "%OUT%\" /Y /Q >nul
+
+rem WebView2 runtime pieces next to the launcher
+xcopy "%ROOT%lib\webview2\Microsoft.Web.WebView2.Core.dll" "%OUT%\" /D /Y /Q >nul
+xcopy "%ROOT%lib\webview2\Microsoft.Web.WebView2.WinForms.dll" "%OUT%\" /D /Y /Q >nul
+xcopy "%ROOT%lib\webview2\WebView2Loader.dll" "%OUT%\" /D /Y /Q >nul
+if not exist "%OUT%\WebView2Loader.dll" (
+  echo       WebView2Loader.dll missing - the launcher window will not start
+)
 
 if not exist "%OUT%\data" mkdir "%OUT%\data"
 if not exist "%OUT%\data\profiles" mkdir "%OUT%\data\profiles"
