@@ -55,6 +55,8 @@ namespace Dpt.NfsWorld.Core
         public int XmppPort = 44603;
         public int[] XmppPortFallbacks = new int[] { 44607 };
         public string XmppHost = "127.0.0.1";
+        /// <summary>Host we tell clients to use for EA-Chat. Empty = whatever Host they used (+1).</summary>
+        public string XmppAdvertise = "";
         public string CertFile = "data/certs/xmpp.pfx";
         public string CertPassword = "nfsw";
         public int XmppIdleSeconds = 900;
@@ -273,6 +275,7 @@ namespace Dpt.NfsWorld.Core
             XmppPort = GetInt("xmpp.port", XmppPort);
             XmppPortFallbacks = MergeList(GetIntList("xmpp.portFallbacks"), XmppPortFallbacks);
             XmppHost = Get("xmpp.host", XmppHost);
+            XmppAdvertise = Get("xmpp.advertise", XmppAdvertise);
             if (XmppHost == "auto") XmppHost = "";
             CertFile = Get("xmpp.certFile", CertFile);
             CertPassword = Get("xmpp.certPassword", CertPassword);
@@ -462,6 +465,7 @@ namespace Dpt.NfsWorld.Core
                 sb.AppendLine("port=" + XmppPort.ToString(CultureInfo.InvariantCulture));
                 sb.AppendLine("portFallbacks=" + Join(XmppPortFallbacks));
                 sb.AppendLine("host=" + XmppHost);
+                sb.AppendLine("advertise=" + XmppAdvertise);
                 sb.AppendLine("certFile=" + CertFile);
                 sb.AppendLine("certPassword=" + CertPassword);
                 sb.AppendLine("idleSeconds=" + XmppIdleSeconds.ToString(CultureInfo.InvariantCulture));

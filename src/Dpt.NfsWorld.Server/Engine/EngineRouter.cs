@@ -447,9 +447,16 @@ namespace Dpt.NfsWorld.Engine
             SendXml(res, text);
         }
 
-        /// <summary>Host the client used to reach us, without the port.</summary>
-        private static string ChatHost(HttpRequest req)
+        /// <summary>
+        /// Host the client should use for EA-Chat: xmpp.advertise when set (a server
+        /// behind hairpin NAT must be able to answer "use my LAN address" instead of
+        /// the public domain the client asked for), otherwise the Host it used.
+        /// </summary>
+        private string ChatHost(HttpRequest req)
         {
+            string configured = _cfg.XmppAdvertise;
+            if (!string.IsNullOrEmpty(configured) && configured != "auto") return configured.Trim();
+
             string host = req.Header("Host") ?? "";
             int colon = host.IndexOf(':');
             if (colon > 0) host = host.Substring(0, colon);

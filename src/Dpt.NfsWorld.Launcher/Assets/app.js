@@ -159,7 +159,12 @@
         { name: 'DPT.Server (домен)', url: 'http://nfsw.dartpower.xyz:44600', mode: 'remote', builtin: true }
       ];
     }
-    if (s.serverUrl) state.servers[state.selected].url = s.serverUrl;
+    // The selected server keeps its own URL: serverUrl is just a mirror of the address
+    // field for the current session. Overwriting the bookmark here made "this PC" turn
+    // back into the domain after every restart.
+    if (s.serverUrl && state.servers[state.selected] && !state.servers[state.selected].url) {
+      state.servers[state.selected].url = s.serverUrl;
+    }
     renderServers();
     setTimeout(function () { state.checking = false; check(false); }, 60);
     setText('versionPill', 'v' + (s.version || '?'));
