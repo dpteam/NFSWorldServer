@@ -268,6 +268,8 @@ data/certs/xmpp.pfx                 самоподписанный TLS для EA
 tools/firewall.ps1/.cmd             правила Windows Firewall
 tools/make-cert.ps1                 пересоздать TLS-сертификат
 tools/fetch-webview2.ps1            скачать SDK WebView2 в lib/webview2
+tools/decompile-client.ps1          разложить managed-часть клиента в refs\_Src (реверс)
+tools/contract-check.ps1           сверить наши XML-шаблоны с DTO из gameplay.dll (реверс)
 tools/enable-tls10.ps1              включить TLS 1.0 в SCHANNEL (для старого клиента)
 tools/import-refs.ps1               залить данные из ..\refs в data/profiles
 tools/test-*.ps1 / ci-test.ps1      тесты
@@ -315,6 +317,8 @@ docs/                               архитектура, протокол, в
 | Лаунчер показывает «нет связи», а сервер жив | проверьте, что открыт **44600** (health спрашивается на игровом порту, не на 44601) |
 | `build.cmd`: `WebView2 SDK missing in lib\webview2` | `powershell -File tools\fetch-webview2.ps1` |
 | `error CS0016: could not write to output file` | сервер или лаунчер запущены — закройте их и повторите сборку |
+| Клиент: «Critical Error: Out of memory» или «No DirectX device found» | это **не** сервер: в RDP-сессии нет D3D-устройства (`Microsoft Remote Display Adapter`), клиент падает на инициализации графики. Запускайте игру в консольной сессии |
+| Клиент молча умирает после одного запроса | смотрите `connection closed after 1 request(s)` в логе; но сначала исключите RDP/D3D |
 
 ## Атрибуция
 

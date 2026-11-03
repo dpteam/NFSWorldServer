@@ -93,6 +93,10 @@ try {
         -Base $envs.Engine -Web $envs.Web -Admin $envs.Admin -Token $envs.Token
     if ($LASTEXITCODE -ne 0) { $failed++ }
 
+    Step 'protocol contracts (client DTO vs our templates)'
+    & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $root 'tools\contract-check.ps1')
+    if ($LASTEXITCODE -ne 0) { $failed++ }
+
     Step 'relay tests'
     & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $root 'tools\test-relay.ps1') `
         -Port $envs.Relay -Admin $envs.Admin -Token $envs.Token

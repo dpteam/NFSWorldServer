@@ -162,10 +162,11 @@ staticOnly=true
 profile=soapbox-1613
 ```
 
-`EngineRouter` в этом режиме не заходит ни в один обработчик: путь `/User/GetPermanentSession`
-превращается в `data/profiles/soapbox-1613/Engine.svc/User/GetPermanentSession.xml`, отсутствующий
-файл — `200` с пустым телом (как делал оригинальный SoapBox), а каждый промах пишется в лог
-(`staticOnly: no file for ...`). Проба лаунчера `/api/*` остаётся рабочей.
+`EngineRouter` в этом режиме сначала ищет файл: путь `/User/GetPermanentSession`
+превращается в `data/profiles/soapbox-1613/Engine.svc/User/GetPermanentSession.xml`.
+Если файла нет — запрос уходит в обычные обработчики (то есть режим годится и для
+постепенного переноса endpoint'ов из данных в код), а промах пишется в лог
+(`staticOnly: no file for ... -> handler`). Проба лаунчера `/api/*` остаётся рабочей.
 
 ## Ответы и коды
 

@@ -50,16 +50,16 @@ namespace Dpt.NfsWorld.Engine
                 }
 
                 // ------------------------------------------ protocol oracle mode
-                // engine.staticOnly=true: answer exactly like the reference pack,
-                // straight from the client profile. Used to find out what a build
-                // really wants before the endpoint is ported into code.
+                // engine.staticOnly=true: a client profile file wins over the code.
+                // With the whole reference tree in the profile the answer is byte
+                // for byte what the pack's server sends; endpoints without a file
+                // still fall through to the real handlers. Used to find out what a
+                // build really wants before the endpoint is ported into code.
                 if (_cfg.EngineStaticOnly)
                 {
                     if (ServeStatic(req, res, profile, rel)) return;
-                    Log.Warn("ENGINE", "staticOnly: no file for " + req.Method + " " + rel +
-                                        " (profile " + (profile == null ? "none" : profile.Id) + ")");
-                    SendEmpty(res, 200);
-                    return;
+                    Log.Proto("ENGINE", "staticOnly: no file for " + req.Method + " " + rel +
+                                        " (profile " + (profile == null ? "none" : profile.Id) + ") -> handler");
                 }
 
                 // ------------------------------------------------------- account

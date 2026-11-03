@@ -62,7 +62,7 @@ namespace Dpt.NfsWorld.Engine
         {
             if (account == null) return null;
             PlayerSession s = new PlayerSession();
-            s.Token = Util.ShortToken(20);
+            s.Token = Guid.NewGuid().ToString(); // reference clients expect a GUID-shaped securityToken
             s.AccountId = account.Id;
             s.Ip = ip ?? "0.0.0.0";
             s.UserAgent = userAgent ?? "";

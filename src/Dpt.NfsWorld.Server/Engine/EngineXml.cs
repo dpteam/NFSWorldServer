@@ -104,7 +104,7 @@ namespace Dpt.NfsWorld.Engine
             lg.Append("<Rating>0.0</Rating>");
             lg.Append("<Rep>").Append(N(p.Rep)).Append("</Rep>");
             lg.Append("<RepAtCurrentLevel>0</RepAtCurrentLevel>");
-            lg.Append("<Score>0</Score></ProfileData>");
+            lg.Append("<ccar i:nil=\"true\"/></ProfileData>");
             return lg.ToString();
         }
 

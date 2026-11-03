@@ -1,4 +1,4 @@
-﻿<ProfileData>
+<ProfileData>
 	<Boost>0</Boost>
 	<Cash>{{Cash}}</Cash>
 	<IconIndex>{{IconIndex}}</IconIndex>
@@ -10,5 +10,5 @@
 	<Rating>{{Rating}}</Rating>
 	<Rep>{{Rep}}</Rep>
 	<RepAtCurrentLevel>0</RepAtCurrentLevel>
-	<Score>{{Score}}</Score>
+	<ccar i:nil="true"/>
 </ProfileData>

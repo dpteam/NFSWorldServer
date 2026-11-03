@@ -18,6 +18,32 @@
 4. **Данные вместо кода.** Отличия версий клиента живут в `data/profiles/<id>/`,
    а не в `if (version == ...)`. Новый endpoint — тоже по возможности файл профиля.
 
+## Реверс — источник правды
+
+Порядок работы с протоколом строго такой:
+
+1. **Смотрим клиента, а не догадываемся.** `gameplay.dll` — управляемая сборка: в ней DTO,
+   порядок полей и полная карта вызовов (`server_packet/MyBinding.cs`, `xsd2cpp/XSD2CPP.cs`).
+   ```powershell
+   dotnet tool install --global ilspycmd
+   ilspycmd -p -o $env:TEMP\gameplay-decomp "<game>\Data\gameplay.dll"
+   ```
+2. **Проверяем догадку на референсных байтах**: `engine.staticOnly=true` + профиль пака
+   (`data/profiles/soapbox-1613`) отдаёт ответ байт-в-байт как эталонный сервер.
+3. **Проверяем различие по одному полю** (или через `engine.staticOnly`-варианты, или
+   правкой шаблона), а не «перепишем всё и посмотрим».
+4. Только потом правим `EngineRouter`/`EngineXml` — и в шаблоны (`templates/*.xml`) кладём
+   порядок элементов ровно как в контракте клиента.
+
+Правила:
+
+- Декомпилированное дерево в репозиторий не кладём; в `docs/REVERSE-ENGINEERING.md` — выводы,
+  цитаты и команды.
+- Лишние поля в ответах не «безобидны»: наш шаблон отдавал `Score`, которого нет в контракте
+  `ProfileData` — такие вещи сначала проверяем по DTO, потом шлём.
+- Признак «клиент умер» в логе — `connection closed after N request(s)`: если N=1, виноват
+  ответ на этот единственный запрос, а не сеть и не firewall.
+
 ## Сборка и тесты
 
 ```bat
@@ -25,6 +51,7 @@ build.cmd
 powershell -File tools\test-engine.ps1
 powershell -File tools\test-relay.ps1
 powershell -File tools\test-xmpp.ps1
+powershell -File tools\contract-check.ps1   :: наши шаблоны vs DTO клиента (реверс)
 powershell -File tools\ci-test.ps1     :: всё сразу
 ```
 
@@ -78,6 +105,8 @@ powershell -File tools\ci-test.ps1     :: всё сразу
 | Лаунчер: «нет связи», хотя сервер жив | health спрашивается на **игровом** порту (`/api/health` в `EngineRouter`), не на 44601 |
 | `build.cmd` не находит WebView2 SDK | `powershell -File tools\fetch-webview2.ps1` (кладёт DLL в `lib\webview2`) |
 | `CS0016` при сборке | запущены `NFSWorldServer.exe` / `NFSWorldLauncher.exe` — закройте процессы |
+| Клиент: «Critical Error: Out of memory» | **сначала проверьте, нет ли RDP**: в RDP-сессии есть только `Microsoft Remote Display Adapter`, и клиент падает на инициализации D3D. Тестировать в консольной сессии (или через AnyDesk к консоли) |
+| Клиент: «No DirectX device found» | то же самое — нет D3D-устройства, протокол не при чём |
 
 ## Definition of done
 

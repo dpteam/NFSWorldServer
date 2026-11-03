@@ -5,16 +5,23 @@ relay/гонки, чтобы сервер не гадал.
 
 ## Инструменты и границы
 
-- REA MCP в этой сессии **не подключён** (`open_binary`, `binary_session` и остальные
-  инструменты отсутствовали), поэтому по инструкции REA работа шла обычными CLI-средствами.
-  Для дальнейших заходов разумно поставить `leanrea` (см. `docs/REVERSE-ENGINEERING.md`
-  в конце) — это тот же подход, но без MCP.
-- `strings.exe` (mingw) по ASCII и UTF-16LE. UTF-16 важен: `gameplay.dll` — управляемая
-  (.NET) сборка, её строки лежат в `#US`-heap и в ASCII не видны.
-- Данные профилей (`data/profiles/...`, `refs/NFSWorldServer/...`) — как контрольные
-  примеры XML.
-- Runtime-наблюдение не проводилось: игра в этой сессии не запускалась. Всё ниже —
-  **статика**.
+- **Правило проекта: реверс — источник правды, гадание — последнее средство.** Если между
+  клиентом и сервером что-то не сходится, сначала смотрим клиента (`ilspycmd`), потом
+  правим сервер. Никаких «а может, они ждут вот такое поле».
+- **`ilspycmd`** — основной инструмент для управляемых сборок. `gameplay.dll` — .NET
+  (861 тип), и в ней лежит весь контрактный слой: DTO, имена endpoint'ов, разбор XML.
+  ```powershell
+  powershell -File tools\decompile-client.ps1        # -> refs\_Src (в .gitignore)
+  powershell -File tools\contract-check.ps1          # шаблоны сервера vs DTO клиента
+  ```
+  Декомпилированное дерево в репозиторий **не кладём** (чужие исходники + 1,8 MB):
+  скрипт воспроизводит его одной командой, а `refs/` уже в `.gitignore`.
+- `nfsw.exe` и `gameplay.native.dll` — **нативные** (PE32 без CLR), транспорт HTTP живёт там.
+  Значит: контракты читаем в managed, поведение транспорта — через логи сервера.
+- `strings.exe` (mingw) по ASCII и UTF-16LE — вспомогательно.
+- Данные профилей (`data/profiles/...`, `refs/...`) — контрольные примеры XML.
+- **`engine.staticOnly=true`** — воспроизведение референсного сервера байт-в-байт
+  (`docs/PROTOCOL.md`), чтобы отделить «клиент хочет другое» от «наш HTTP слой».
 
 ## Исследованные файлы
 
@@ -227,7 +234,82 @@ P2PCryptoTicket, ClientServerCryptoTicket
 `nfsw.exe` содержит `jabber:client`, `jabber:iq:auth`, `urn:ietf:params:xml:ns:xmpp-tls`,
 `urn:ietf:params:xml:ns:xmpp-sasl`, `clientlocking.xsd` — наш EA-Chat говорит ровно это.
 
-### 5. Что осталось неизвестным
+### 5. Managed-слой клиента: как он реально устроен
+
+`gameplay.dll` декомпилируется целиком (`ilspycmd -p`), и это снимает почти весь вопрос
+«а что клиент ждёт от сервера».
+
+**Транспорт — нативный, контракты — управляемые.**
+
+- `GameCore.Server` (`GameCore/Server.cs`) — тонкая обёртка: `SendGetRequest`,
+  `SendPostRequest`, `SendPutRequest`, `SendDeleteRequest` → `_EASharpBinding_43x`, то есть
+  P/Invoke в `gameplay.native.dll`. Заголовки, keep-alive, gzip — там, в нативке.
+- `server_packet/MyBinding.cs` — **полная карта вызовов**: каждый метод собирает
+  `$"{Server.GetBaseRawUrl()}/Engine.svc/<путь>?<параметры>"`. Это готовый список
+  endpoint'ов с именами параметров (совпадает с `docs/PROTOCOL.md`, но здесь ещё и типы
+  аргументов).
+- `Victory.TransferObjects.*`, `Victory.DataLayer.Serialization.*` — DTO с **именем поля =
+  именем XML-элемента** (public fields, не properties).
+- `xsd2cpp/XSD2CPP.cs` (600 KB) — сгенерированный сериализатор: `Reader(...)`/`Writer(...)`
+  и `Read<UserInfo>`/`Write<UserInfo>`. Здесь лежит точный порядок элементов.
+
+**Разбор ответов терпимый, поэтому «лишнее поле» клиента не убивает:**
+
+```csharp
+// XSD2CPP.ReadUserInfo / ReadProfileData
+if (doc.FirstChild(pName)) Xsd2CppUtil.ReadInt(doc, out data.IconIndex);   // нет элемента -> пропуск
+// Xsd2CppUtil: TryParse для чисел, ReadString просто берёт значение узла
+```
+
+Значит падение «Out of memory» — **не** ошибка разбора XML. Ищем дальше: значения полей,
+которые клиент использует как ключи (personaId, userId), и его нативное окружение.
+
+**Контракт `Victory.TransferObjects.User.UserInfo`:**
+
+```
+UserInfo : int defaultPersonaIdx; List<ProfileData> personas; User user
+User     : 29 полей — address1, address2, country, dateCreated, dob, email, emailStatus,
+           firstName, fullGameAccess, gender, idDigits, isComplete, landlinePhone, language,
+           lastAuthDate, lastName, mobile, nickname, postalCode, realName, reasonCode,
+           remoteUserId (Int64), securityToken, starterPackEntitlementTag, status,
+           subscribeMsg, tosVersion, userId (Int64), username
+ProfileData : Boost (double), Cash (double), IconIndex (int), Level (int), Motto (string),
+           Name (string), PercentToLevel (float), PersonaId (Int64), Rating (double),
+           Rep (double), RepAtCurrentLevel (int), ccar (List<ProfileDataCCar>)
+```
+
+Поля `Score` в контракте **нет** — его отдавал наш шаблон `ProfileData.xml` (убрано).
+Порядок элементов в шаблоне обязан совпадать с порядком в контракте.
+
+### 6. Runtime-наблюдение за эталонным сервером пака
+
+Их java-сервер (`soapbox-race-offline-1.9.0.jar`, Jetty на **7331**) сам печатает команду
+запуска клиента:
+
+```
+Running command:
+E:\...\nfsw.exe US http://127.0.0.1:7331/soapbox/Engine.svc a 1
+```
+
+Что из этого важно:
+
+- базовый URL может содержать префикс (`/soapbox`); клиент берёт его из аргумента и
+  дальше сам добавляет `/Engine.svc/...`. Наш сервер отдаёт всё с корня, поэтому в
+  лаунчере URL без префикса — это нормально;
+- `a 1` — авто-логин (клиент идёт сразу в `GetPermanentSession`, без `authenticateUser`);
+- jar-версии нужен JRE; в паке папка `java` пустая (JRE вырезан), лаунчер exe4j пишет
+  «bundled Java Runtime Environment ... missing or corrupted» — запускать надо
+  `java -jar soapbox-race-offline-1.9.0.jar`, а не их exe.
+
+Живые прогоны клиента дали ещё один вывод, который дороже любого поля в XML:
+
+- в **RDP-сессии** в системе остаётся только `Microsoft Remote Display Adapter`, и клиент
+  падает на инициализации графики с `Critical Error: Out of memory` (или
+  `No DirectX device found`). Это **не** ошибка протокола: клиент успевает сходить в
+  `GetPermanentSession` и умирает, не отправив второй запрос. Тестировать игру нужно в
+  консольной сессии.
+
+### 7. Что осталось неизвестным
 
 - **Формат UDP-кадров релея**: handshake (`gameid`, `peermask`), `Loading Init/Finished`,
   countdown-предложения и шифрование (`relay_crypto_ticket`). Ни одна из этих строк не
