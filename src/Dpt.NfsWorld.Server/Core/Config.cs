@@ -41,6 +41,8 @@ namespace Dpt.NfsWorld.Core
         /// reference pack can be replayed byte for byte while endpoints are ported.
         /// </summary>
         public bool EngineStaticOnly = false;
+        /// <summary>Point dead absolute urls from the reference data at this server.</summary>
+        public bool RewriteUrls = true;
         public long RewardCashPerEvent;
         public long RewardRepPerEvent;
         public long StartingCash = 100000;
@@ -262,6 +264,7 @@ namespace Dpt.NfsWorld.Core
             StaticFallback = GetBool("engine.staticFallback", StaticFallback);
             LenientUnhandled = GetBool("engine.lenientUnhandled", LenientUnhandled);
             EngineStaticOnly = GetBool("engine.staticOnly", EngineStaticOnly);
+            RewriteUrls = GetBool("engine.rewriteUrls", RewriteUrls);
             RewardCashPerEvent = GetLong("engine.rewardCashPerEvent", RewardCashPerEvent);
             RewardRepPerEvent = GetLong("engine.rewardRepPerEvent", RewardRepPerEvent);
             StartingCash = GetLong("engine.startingCash", StartingCash);
@@ -451,6 +454,7 @@ namespace Dpt.NfsWorld.Core
                 sb.AppendLine("staticFallback=" + Bool(StaticFallback));
                 sb.AppendLine("lenientUnhandled=" + Bool(LenientUnhandled));
                 sb.AppendLine("staticOnly=" + Bool(EngineStaticOnly));
+                sb.AppendLine("rewriteUrls=" + Bool(RewriteUrls));
                 sb.AppendLine("rewardCashPerEvent=" + RewardCashPerEvent.ToString(CultureInfo.InvariantCulture));
                 sb.AppendLine("rewardRepPerEvent=" + RewardRepPerEvent.ToString(CultureInfo.InvariantCulture));
                 sb.AppendLine("startingCash=" + StartingCash.ToString(CultureInfo.InvariantCulture));

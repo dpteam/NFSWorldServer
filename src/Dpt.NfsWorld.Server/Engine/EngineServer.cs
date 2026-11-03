@@ -284,6 +284,22 @@ namespace Dpt.NfsWorld.Engine
                     }
 
                     bool keep = req.KeepAlive && served < 50;
+
+                    // The client fetches absolute URLs that came from the reference data:
+                    // the EA portal, the EULA on cdn.world.needforspeed.com, an internal
+                    // 10.100.15.202 launcher service. Those hosts are dead or unroutable,
+                    // so the game sits on a black screen for minutes and exits silently.
+                    // Point every such URL at this server instead.
+                    if (_cfg.RewriteUrls && resp.Body != null && resp.Body.Length > 0 && IsCompressible(resp.ContentType))
+                    {
+                        string body = Encoding.UTF8.GetString(resp.Body);
+                        string rewritten = UrlRewrite(body, req);
+                        if (!string.Equals(body, rewritten, StringComparison.Ordinal))
+                        {
+                            resp.Body = Encoding.UTF8.GetBytes(rewritten);
+                            if (Log.ProtocolTrace) Log.Proto("ENGINE", "rewrote external urls in " + req.Path);
+                        }
+                    }
                     try { conn.WriteResponse(resp, string.Equals(req.Method, "HEAD", StringComparison.Ordinal), keep); }
                     catch (IOException) { break; }
                     catch (ObjectDisposedException) { break; }
@@ -329,6 +345,63 @@ namespace Dpt.NfsWorld.Engine
                    t.IndexOf("json", StringComparison.Ordinal) >= 0 ||
                    t.IndexOf("javascript", StringComparison.Ordinal) >= 0 ||
                    t.IndexOf("text/", StringComparison.Ordinal) >= 0;
+        }
+
+        /// <summary>
+        /// Absolute urls baked into the reference data point at the dead EA portal,
+        /// an internal launcher host and an Akamai CDN. The client happily waits on
+        /// them for minutes, so every one of them is redirected to this server: it
+        /// answers at once (or 404s), which is all the client needs to move on.
+        /// </summary>
+        private string UrlRewrite(string body, HttpRequest req)
+        {
+            string origin = "http://" + (req.Header("Host") ?? ("127.0.0.1:" + _port));
+            string hostOnly = origin.Substring("http://".Length);
+            int colon = hostOnly.IndexOf(':');
+            if (colon > 0) hostOnly = hostOnly.Substring(0, colon);
+
+            string result = body;
+            for (int i = 0; i < UrlReplacements.Length; i++)
+            {
+                string from = UrlReplacements[i];
+                if (from.Length == 0 || result.IndexOf(from, StringComparison.OrdinalIgnoreCase) < 0) continue;
+                string to = from.StartsWith("http", StringComparison.OrdinalIgnoreCase) ? origin : hostOnly;
+                result = ReplaceIgnoreCase(result, from, to);
+            }
+            if (!string.IsNullOrEmpty(_cfg.PublicUrl))
+                result = ReplaceIgnoreCase(result, _cfg.PublicUrl.TrimEnd('/'), origin);
+            return result;
+        }
+
+        private static readonly string[] UrlReplacements = new string[]
+        {
+            "https://cdn.world.needforspeed.com",
+            "http://cdn.world.needforspeed.com",
+            "https://world.needforspeed.com",
+            "http://world.needforspeed.com",
+            "https://www.needforspeed.com",
+            "http://www.needforspeed.com",
+            "world.needforspeed.com",
+            "http://10.100.15.202",
+            "http://bbx-qafarm-05"
+        };
+
+        private static string ReplaceIgnoreCase(string text, string from, string to)
+        {
+            if (string.IsNullOrEmpty(from)) return text;
+            int index = 0;
+            StringBuilder sb = null;
+            while (true)
+            {
+                int hit = text.IndexOf(from, index, StringComparison.OrdinalIgnoreCase);
+                if (hit < 0) break;
+                if (sb == null) sb = new StringBuilder(text.Length + 32);
+                sb.Append(text, index, hit - index).Append(to);
+                index = hit + from.Length;
+            }
+            if (sb == null) return text;
+            sb.Append(text, index, text.Length - index);
+            return sb.ToString();
         }
 
         // -------------------------------------------------------------- bans
