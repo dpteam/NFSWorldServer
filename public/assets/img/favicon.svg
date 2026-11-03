@@ -1,14 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <defs>
-    <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#6f9bc9"/>
-      <stop offset="1" stop-color="#35597f"/>
-    </linearGradient>
-  </defs>
-  <rect width="64" height="64" rx="14" fill="url(#g)"/>
-  <rect x="4" y="4" width="56" height="56" rx="11" fill="none" stroke="#ffffff" stroke-opacity=".28"/>
-  <text x="32" y="39" font-family="Segoe UI, Tahoma, Arial, sans-serif" font-size="19" font-weight="700"
-        fill="#ffffff" text-anchor="middle" letter-spacing="-0.4">DPT</text>
-  <path d="M18 46h28" stroke="#ffffff" stroke-opacity=".55" stroke-width="2" stroke-linecap="round"/>
-  <path d="M22 49h8M34 49h8" stroke="#ffffff" stroke-opacity=".35" stroke-width="2" stroke-linecap="round"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><defs><linearGradient id="g" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#6f9bc9"/><stop offset="1" stop-color="#35597f"/></linearGradient></defs><rect width="64" height="64" fill="url(#g)" rx="14"/><rect width="56" height="56" x="4" y="4" fill="none" stroke="#fff" stroke-opacity=".28" rx="11"/><text x="32" y="39" fill="#fff" font-family="Segoe UI, Tahoma, Arial, sans-serif" font-size="19" font-weight="700" letter-spacing="-.4" text-anchor="middle">DPT</text><path stroke="#fff" stroke-linecap="round" stroke-opacity=".55" stroke-width="2" d="M18 46h28"/><path stroke="#fff" stroke-linecap="round" stroke-opacity=".35" stroke-width="2" d="M22 49h8M34 49h8"/></svg>
