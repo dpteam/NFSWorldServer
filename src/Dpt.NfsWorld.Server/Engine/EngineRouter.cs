@@ -1144,18 +1144,7 @@ namespace Dpt.NfsWorld.Engine
                 res.Status = 200;
                 res.ContentType = Mime(ext);
                 res.Body = data;
-                res.Set("Cache-Control", "public, max-age=60");
-                res.Set("X-Content-Type-Options", "nosniff");
-                if (_cfg.Compress && IsText(ext) && data.Length > 1024 &&
-                    (req.Header("Accept-Encoding") ?? "").IndexOf("gzip", StringComparison.OrdinalIgnoreCase) >= 0)
-                {
-                    byte[] gz = HttpCompression.Gzip(data);
-                    if (gz != null && gz.Length < data.Length)
-                    {
-                        res.Body = gz;
-                        res.Set("Content-Encoding", "gzip");
-                    }
-                }
+                // gzip is applied centrally in EngineServer: the client always gunzips
                 return true;
             }
             catch (Exception ex)
@@ -1174,7 +1163,7 @@ namespace Dpt.NfsWorld.Engine
         {
             switch (ext)
             {
-                case ".xml": return "application/xml; charset=utf-8";
+                case ".xml": return "application/xml;charset=utf-8";
                 case ".json": return "application/json; charset=utf-8";
                 case ".html": case ".htm": return "text/html; charset=utf-8";
                 case ".css": return "text/css; charset=utf-8";
@@ -1243,7 +1232,7 @@ namespace Dpt.NfsWorld.Engine
         private static void SendXml(HttpResponse res, string xml)
         {
             res.Status = 200;
-            res.ContentType = "application/xml; charset=utf-8";
+            res.ContentType = "application/xml;charset=utf-8";
             res.Body = Encoding.UTF8.GetBytes(xml ?? "");
         }
 
@@ -1271,14 +1260,14 @@ namespace Dpt.NfsWorld.Engine
         private static void SendEmpty(HttpResponse res, int status)
         {
             res.Status = status;
-            res.ContentType = "application/xml; charset=utf-8";
+            res.ContentType = "application/xml;charset=utf-8";
             res.Body = new byte[0];
         }
 
         private static void Send30Empty(HttpResponse res)
         {
             res.Status = 200;
-            res.ContentType = "application/xml; charset=utf-8";
+            res.ContentType = "application/xml;charset=utf-8";
             res.Body = Encoding.UTF8.GetBytes("<ArrayOfstring/>");
         }
     }

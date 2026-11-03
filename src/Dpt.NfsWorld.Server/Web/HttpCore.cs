@@ -380,6 +380,26 @@ namespace Dpt.NfsWorld.Web
             catch { return input; }
         }
 
+        /// <summary>
+        /// Compress whatever comes, even a 100-byte document, and return null when it
+        /// fails. The game client advertises gzip and then always gunzips, so a plain
+        /// body with "Content-Encoding: gzip" makes it die; callers must never guess.
+        /// </summary>
+        public static byte[] GzipAlways(byte[] input)
+        {
+            if (input == null || input.Length == 0) return null;
+            try
+            {
+                using (MemoryStream ms = new MemoryStream())
+                {
+                    using (GZipStream gz = new GZipStream(ms, CompressionMode.Compress, true))
+                        gz.Write(input, 0, input.Length);
+                    return ms.ToArray();
+                }
+            }
+            catch { return null; }
+        }
+
         public static byte[] Gunzip(byte[] input, int maxBytes)
         {
             if (input == null || input.Length == 0) return input;

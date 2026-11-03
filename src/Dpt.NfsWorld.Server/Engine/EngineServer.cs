@@ -265,6 +265,24 @@ namespace Dpt.NfsWorld.Engine
                             Log.Proto("ENGINE", "    resp " + resp.Body.Length + "B: " + Util.Truncate(Text(resp.Body), 400));
                     }
 
+                    // The NFSW client advertises Accept-Encoding: gzip and then always gunzips the
+                    // body - a plain body makes it die with "Out of memory". Jetty compresses
+                    // every response, down to a couple of hundred bytes, so do the same.
+                    if (resp.Body != null && resp.Body.Length > 0 &&
+                        !resp.Headers.ContainsKey("Content-Encoding") &&
+                        IsCompressible(resp.ContentType) &&
+                        (req.Header("Accept-Encoding") ?? "").IndexOf("gzip", StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        byte[] gz = HttpCompression.GzipAlways(resp.Body);
+                        if (gz != null)
+                        {
+                            // no size check: even a 187-byte XML is compressed by the
+                            // reference server, and this client always gunzips
+                            resp.Body = gz;
+                            resp.Set("Content-Encoding", "gzip");
+                        }
+                    }
+
                     bool keep = req.KeepAlive && served < 50;
                     try { conn.WriteResponse(resp, string.Equals(req.Method, "HEAD", StringComparison.Ordinal), keep); }
                     catch (IOException) { break; }
@@ -297,6 +315,20 @@ namespace Dpt.NfsWorld.Engine
         {
             if (body == null || body.Length == 0) return "";
             return Encoding.UTF8.GetString(body);
+        }
+
+        /// <summary>
+        /// Text payloads the game reads as XML/JSON: exactly the ones the reference
+        /// server compresses. Images and the like stay as they are.
+        /// </summary>
+        private static bool IsCompressible(string contentType)
+        {
+            if (string.IsNullOrEmpty(contentType)) return false;
+            string t = contentType.ToLowerInvariant();
+            return t.IndexOf("xml", StringComparison.Ordinal) >= 0 ||
+                   t.IndexOf("json", StringComparison.Ordinal) >= 0 ||
+                   t.IndexOf("javascript", StringComparison.Ordinal) >= 0 ||
+                   t.IndexOf("text/", StringComparison.Ordinal) >= 0;
         }
 
         // -------------------------------------------------------------- bans

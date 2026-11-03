@@ -107,6 +107,7 @@ powershell -File tools\ci-test.ps1     :: всё сразу
 | `CS0016` при сборке | запущены `NFSWorldServer.exe` / `NFSWorldLauncher.exe` — закройте процессы |
 | Клиент: «Critical Error: Out of memory» | **сначала проверьте, нет ли RDP**: в RDP-сессии есть только `Microsoft Remote Display Adapter`, и клиент падает на инициализации D3D. Тестировать в консольной сессии (или через AnyDesk к консоли) |
 | Клиент: «No DirectX device found» | то же самое — нет D3D-устройства, протокол не при чём |
+| Клиент живёт 1-4 запроса и умирает с «Out of memory» | **gzip**. Клиент присылает `Accept-Encoding: gzip` и потом **всегда** распаковывает тело. Несжатый ответ (или `Content-Encoding: gzip` на несжатых данных) = падение. `EngineServer` жмёт любой непустой текстовый ответ через `HttpCompression.GzipAlways`, без порога по размеру. Jetty делает так же (187 Б → 155 Б) |
 
 ## Definition of done
 
